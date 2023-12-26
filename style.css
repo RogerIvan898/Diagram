@@ -1,0 +1,22 @@
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.diagram{
+    margin-top: 300px;
+    display: flex;
+    width: 72vw;
+    height: 400px;
+    align-items: flex-end;
+    justify-content: center;
+}
+.diagram-column{
+    background: darkseagreen;
+    width: 100px;
+    border: 1px solid black;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
