@@ -1,19 +1,9 @@
 function getNumbers(){
-    const numbers = {}
     const inputText = document.querySelector('input').value
-    let numbersArr = inputText.split(' ').filter(number => !isNaN(Number(number)) && number !== '')
+    const numbers = inputText.split(' ').filter(number => !isNaN(Number(number)) && number !== '')
 
-    for(let number of numbersArr){
-        if(!numbers.hasOwnProperty(number)){
-            numbers[number] = 1
-        }
-        else {
-            numbers[number]++
-        }
-    }
     return numbers
 }
-
 
 function drawDiagram(){
     const MAX_COLUMN_HEIGHT = 650
@@ -22,18 +12,16 @@ function drawDiagram(){
     const maxNumber = Math.max(...Object.values(numbers))
 
     clearDiagram()
-
-    for(let number of Object.keys(numbers)) {
+    for(let number of numbers) {
         const newColumnElement = columnElement.cloneNode(true)
         newColumnElement.style.display = 'flex'
 
-        newColumnElement.style.height = `${(MAX_COLUMN_HEIGHT*numbers[number])/maxNumber}px`
+        newColumnElement.style.height = `${(MAX_COLUMN_HEIGHT*number)/maxNumber}px`
         newColumnElement.childNodes[0].textContent = number
         columnElement.after(newColumnElement)
         columnElement = newColumnElement
     }
 }
-
 
 function clearDiagram(){
     const columns = Array.from(document.getElementsByClassName('diagram-column'))
