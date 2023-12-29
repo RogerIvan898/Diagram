@@ -14,10 +14,9 @@ function drawDiagram(){
     const numbers = getNumbers()
     const maxNumber = Math.max(...numbers)
 
-
     clearDiagram()
     for(let number of numbers) {
-        const newColumnElement = createColumn()
+        const newColumnElement = createElement('div','diagram-column')
 
         newColumnElement.style.height = `${(MAX_COLUMN_HEIGHT*number)/maxNumber}%`
         newColumnElement.textContent = number
@@ -32,10 +31,12 @@ function clearDiagram(){
     })
 }
 
-function createColumn(){
-    const columnElement = document.createElement('div')
-    columnElement.setAttribute('class','diagram-column')
+function createElement(tagName,...classes){
+    const element = document.createElement(tagName)
+    if(classes.length){
+        element.classList.add(...classes)
+    }
 
-    return columnElement
+    return element
 }
 
