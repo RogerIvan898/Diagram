@@ -4,14 +4,16 @@ body{
     align-items: center;
     flex-direction: column;
 }
-.diagram{
-    margin-top: 300px;
+
+#diagram{
+    margin-top: 15vh;
     display: flex;
     width: 72vw;
-    height: 400px;
+    height: 65vh;
     align-items: flex-end;
     justify-content: center;
 }
+
 .diagram-column{
     background: darkseagreen;
     width: 100px;
