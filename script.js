@@ -1,4 +1,6 @@
 const buttonElement = document.getElementById('diagram-options-button')
+const MAX_COLUMN_HEIGHT = 100
+
 buttonElement.addEventListener('click',drawDiagram)
 
 function getNumbers(){
@@ -9,7 +11,7 @@ function getNumbers(){
 }
 
 function drawDiagram(){
-    const MAX_COLUMN_HEIGHT = 100
+
     const diagramElement = document.getElementById('diagram')
     const numbers = getNumbers()
     const maxNumber = Math.max(...numbers)
@@ -31,7 +33,7 @@ function clearDiagram(){
     })
 }
 
-function createElement(tagName,...classes){
+function createElement(tagName, ...classes){
     const element = document.createElement(tagName)
     if(classes.length){
         element.classList.add(...classes)
