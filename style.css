@@ -1,0 +1,25 @@
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#diagram{
+    margin-top: 15vh;
+    display: flex;
+    width: 72vw;
+    height: 65vh;
+    gap: 10px;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.diagram-column{
+    background: darkseagreen;
+    width: 100px;
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
