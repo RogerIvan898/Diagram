@@ -2,14 +2,14 @@ const MAX_COLUMN_HEIGHT = 100
 
 const buttonElement = document.getElementById('diagram-options-button')
 const diagramElement = document.getElementById('diagram')
-const buttonSortFromMinToMax = document.getElementById('buttons-sort-button-from-min-to-max')
-const buttonSortFromMaxToMin = document.getElementById('buttons-sort-button-from-max-to-min')
+const buttonSortFromMinToMax = document.getElementById('sort-from-min-to-max')
+const buttonSortFromMaxToMin = document.getElementById('sort-from-max-to-min')
 
 let diagramNumbers = []
 
 buttonElement.addEventListener('click',createDiagram)
-buttonSortFromMaxToMin.addEventListener('click',sortColumnsFromMaxToMin)
-buttonSortFromMinToMax.addEventListener('click',sortColumnsFromMinToMax)
+buttonSortFromMaxToMin.addEventListener('click',()=> sortColumns(()=>bubbleSortFromMaxToMin(diagramNumbers)))
+buttonSortFromMinToMax.addEventListener('click',()=> sortColumns(()=>bubbleSortFromMinToMax(diagramNumbers)))
 
 function getNumbers(){
     const inputText = document.getElementById('diagram-options-input').value
@@ -24,6 +24,9 @@ function createDiagram(){
         clearDiagram()
         drawDiagram(numbers)
         diagramNumbers = [...numbers]
+
+        buttonSortFromMinToMax.removeAttribute('disabled')
+        buttonSortFromMaxToMin.removeAttribute('disabled')
     }
 }
 
@@ -72,12 +75,7 @@ function bubbleSortFromMaxToMin(array){
     return bubbleSortFromMinToMax(array).reverse()
 }
 
-function sortColumnsFromMinToMax(){
-    diagramNumbers = bubbleSortFromMinToMax(diagramNumbers)
-    drawDiagram(diagramNumbers)
-}
-
-function sortColumnsFromMaxToMin(){
-    diagramNumbers = bubbleSortFromMaxToMin(diagramNumbers)
+function sortColumns(sortFunction){
+    diagramNumbers = sortFunction(diagramNumbers)
     drawDiagram(diagramNumbers)
 }
