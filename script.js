@@ -2,20 +2,32 @@ const MAX_COLUMN_HEIGHT = 100
 
 const buttonElement = document.getElementById('diagram-options-button')
 const diagramElement = document.getElementById('diagram')
+const buttonSortFromMinToMax = document.getElementById('button-sort-from-min-to-max')
+const buttonSortFromMaxToMin = document.getElementById('button-sort-from-max-to-min')
 
-buttonElement.addEventListener('click',drawDiagram)
+let diagramNumbers = []
+buttonElement.addEventListener('click',createDiagram)
+buttonSortFromMaxToMin.addEventListener('click',sortDiagramFromMaxToMin)
+buttonSortFromMinToMax.addEventListener('click',sortDiagarmFromMinToMax)
 
 function getNumbers(){
     const inputText = document.getElementById('diagram-options-input').value
     const numbers = inputText.split(' ').filter(number => !isNaN(Number(number)) && number !== '')
 
-    return numbers
+    return numbers.map(number => Number(number))
 }
 
-function drawDiagram(){
-    clearDiagram()
-
+function createDiagram(){
     const numbers = getNumbers()
+    if(numbers){
+        clearDiagram()
+        drawDiagram(numbers)
+        diagramNumbers = [...numbers]
+    }
+}
+
+function drawDiagram(numbers){
+    clearDiagram()
     const maxNumber = Math.max(...numbers)
 
     for(let number of numbers) {
@@ -28,9 +40,7 @@ function drawDiagram(){
 
 function clearDiagram(){
     const columns = Array.from(document.getElementsByClassName('diagram-column'))
-    columns.forEach(column =>{
-        column.remove()
-    })
+    columns.forEach(column => column.remove())
 }
 
 function createElement(tagName, ...classes){
@@ -38,6 +48,33 @@ function createElement(tagName, ...classes){
     if(classes.length){
         element.classList.add(...classes)
     }
-
     return element
+}
+
+function bubbleSortFromMinToMax(array){
+    const sortedArray = [...array]
+    for(let i=0; i < sortedArray.length; i++) {
+        for (let j = 0; j < sortedArray.length - i; j++) {
+            if (sortedArray[j] > sortedArray[j + 1]) {
+                const tmp = sortedArray[j]
+                sortedArray[j] = sortedArray[j + 1]
+                sortedArray[j + 1] = tmp
+            }
+        }
+    }
+    return sortedArray
+}
+
+function bubbleSortFromMaxToMin(array){
+    return bubbleSortFromMinToMax(array).reverse()
+}
+
+function sortDiagarmFromMinToMax(){
+    diagramNumbers = bubbleSortFromMinToMax(diagramNumbers)
+    drawDiagram(diagramNumbers)
+}
+
+function sortDiagramFromMaxToMin(){
+    diagramNumbers = bubbleSortFromMaxToMin(diagramNumbers)
+    drawDiagram(diagramNumbers)
 }

@@ -23,3 +23,7 @@ body{
     justify-content: center;
     align-items: center;
 }
+
+#sort-buttons{
+    display: flex;
+}
