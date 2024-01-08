@@ -2,8 +2,8 @@ const MAX_COLUMN_HEIGHT = 100
 
 const buttonElement = document.getElementById('diagram-options-button')
 const diagramElement = document.getElementById('diagram')
-const buttonSortFromMinToMax = document.getElementById('button-sort-from-min-to-max')
-const buttonSortFromMaxToMin = document.getElementById('button-sort-from-max-to-min')
+const buttonSortFromMinToMax = document.getElementById('buttons-sort-button-from-min-to-max')
+const buttonSortFromMaxToMin = document.getElementById('buttons-sort-button-from-max-to-min')
 
 let diagramNumbers = []
 buttonElement.addEventListener('click',createDiagram)

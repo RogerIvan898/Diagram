@@ -24,6 +24,8 @@ body{
     align-items: center;
 }
 
-#sort-buttons{
+#buttons-sort{
+    gap: 24px;
+    margin-top: 24px;
     display: flex;
 }
