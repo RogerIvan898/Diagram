@@ -1,15 +1,15 @@
 const MAX_COLUMN_HEIGHT = 100
 
-const buttonElement =   document.getElementById('diagram-options-button')
-const buttonSortToMax = document.getElementById('sort-max')
-const buttonSortToMin = document.getElementById('sort-min')
-const diagramElement =  document.getElementById('diagram')
+const buttonCreateDiagram =   document.getElementById('diagram-options-button')
+const buttonSortToMax =  document.getElementById('sort-max')
+const buttonSortToMin =  document.getElementById('sort-min')
+const diagramElement =   document.getElementById('diagram')
 
 let diagramNumbers = []
 
 buttonSortToMin.addEventListener('click', () => sortColumns('min'))
 buttonSortToMax.addEventListener('click', () => sortColumns('max'))
-buttonElement.addEventListener('click', createDiagram)
+buttonCreateDiagram.addEventListener('click', createDiagram)
 
 function getNumbers(){
     const inputText = document.getElementById('diagram-options-input').value
@@ -18,7 +18,7 @@ function getNumbers(){
     return numbers.map(number => Number(number))
 }
 
-function createDiagram() {
+function createDiagram(){
     const numbers = getNumbers()
     if(numbers){
         clearDiagram()
