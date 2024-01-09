@@ -6,9 +6,10 @@ const buttonSortToMin =  document.getElementById('sort-min')
 const diagramElement =   document.getElementById('diagram')
 
 let diagramNumbers = []
+let interval
 
-buttonSortToMin.addEventListener('click', () => sortColumns('min'))
-buttonSortToMax.addEventListener('click', () => sortColumns('max'))
+buttonSortToMin.addEventListener('click', () => sortColumns(sortMin))
+buttonSortToMax.addEventListener('click', () => sortColumns(sortMax))
 buttonCreateDiagram.addEventListener('click', createDiagram)
 
 function getNumbers(){
@@ -56,27 +57,42 @@ function createElement(tagName, ...classes){
     return element
 }
 
-function sortArray(direction = 'max'){
-    const sortedArray = [...diagramNumbers]
+function sortColumns(compareFunction){
+    let i = 0
+    let j = 0
 
-    for (let i = 0; i < sortedArray.length; i++) {
-        for (let j = 0; j < sortedArray.length - i; j++) {
-            if (sortedArray[j] > sortedArray[j + 1]) {
-                const tmp = sortedArray[j]
-                sortedArray[j] = sortedArray[j + 1]
-                sortedArray[j + 1] = tmp
+    clearInterval(interval)
+    interval = setInterval(async () => {
+        if(i < diagramNumbers.length){
+            const columns = Array.from(document.getElementsByClassName('diagram-column'))
+            if(j < diagramNumbers.length - i - 1) {
+                const compareResult = compareFunction(diagramNumbers[j], diagramNumbers[j + 1])
+                columns[j].style.background = 'red'
+                columns[j + 1].style.background = 'red'
+
+                 if (compareResult > 0) {
+                    const tmp = diagramNumbers[j]
+                    diagramNumbers[j] = diagramNumbers[j + 1]
+                    diagramNumbers[j + 1] = tmp
+                }
+                await setTimeout(() => drawDiagram(diagramNumbers),300)
+                j++
+            }
+            else {
+                j = 0
+                i++
             }
         }
-    }
-
-    if(direction === 'min'){
-        sortedArray.reverse()
-    }
-
-    return sortedArray
+        else {
+            clearInterval(interval)
+        }
+    }, 1000)
 }
 
-function sortColumns(direction){
-    diagramNumbers = sortArray(direction)
-    drawDiagram(diagramNumbers)
+function sortMax(a, b) {
+    return a - b
+}
+
+function sortMin(a, b){
+    return b - a
 }
