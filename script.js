@@ -1,15 +1,15 @@
 const MAX_COLUMN_HEIGHT = 100
 
-const buttonElement = document.getElementById('diagram-options-button')
-const diagramElement = document.getElementById('diagram')
-const buttonSortFromMinToMax = document.getElementById('sort-max')
-const buttonSortFromMaxToMin = document.getElementById('sort-min')
+const buttonElement =   document.getElementById('diagram-options-button')
+const buttonSortToMax = document.getElementById('sort-max')
+const buttonSortToMin = document.getElementById('sort-min')
+const diagramElement =  document.getElementById('diagram')
 
 let diagramNumbers = []
 
-buttonElement.addEventListener('click',createDiagram)
-buttonSortFromMaxToMin.addEventListener('click',()=>sortColumns('min'))
-buttonSortFromMinToMax.addEventListener('click',()=> sortColumns('max'))
+buttonSortToMin.addEventListener('click', () => sortColumns('min'))
+buttonSortToMax.addEventListener('click', () => sortColumns('max'))
+buttonElement.addEventListener('click', createDiagram)
 
 function getNumbers(){
     const inputText = document.getElementById('diagram-options-input').value
@@ -18,15 +18,15 @@ function getNumbers(){
     return numbers.map(number => Number(number))
 }
 
-function createDiagram(){
+function createDiagram() {
     const numbers = getNumbers()
     if(numbers){
         clearDiagram()
         drawDiagram(numbers)
         diagramNumbers = [...numbers]
 
-        buttonSortFromMinToMax.disabled = false
-        buttonSortFromMaxToMin.disabled = false
+        buttonSortToMax.disabled = false
+        buttonSortToMin.disabled = false
     }
 }
 
@@ -56,22 +56,21 @@ function createElement(tagName, ...classes){
     return element
 }
 
-function sortArray(array,direction){
-    const sortedArray = [...array]
+function sortArray(direction = 'max'){
+    const sortedArray = [...diagramNumbers]
 
-    if(direction === 'max' || direction === 'min') {
-        for (let i = 0; i < sortedArray.length; i++) {
-            for (let j = 0; j < sortedArray.length - i; j++) {
-                if (sortedArray[j] > sortedArray[j + 1]) {
-                    const tmp = sortedArray[j]
-                    sortedArray[j] = sortedArray[j + 1]
-                    sortedArray[j + 1] = tmp
-                }
+    for (let i = 0; i < sortedArray.length; i++) {
+        for (let j = 0; j < sortedArray.length - i; j++) {
+            if (sortedArray[j] > sortedArray[j + 1]) {
+                const tmp = sortedArray[j]
+                sortedArray[j] = sortedArray[j + 1]
+                sortedArray[j + 1] = tmp
             }
         }
-        if(direction === 'min'){
-            sortedArray.reverse()
-        }
+    }
+
+    if(direction === 'min'){
+        sortedArray.reverse()
     }
 
     return sortedArray
@@ -79,10 +78,10 @@ function sortArray(array,direction){
 
 function sortColumns(direction){
     if(direction === 'min'){
-        diagramNumbers = sortArray(diagramNumbers,'min')
+        diagramNumbers = sortArray('min')
     }
     if(direction === 'max'){
-        diagramNumbers = sortArray(diagramNumbers,'max')
+        diagramNumbers = sortArray()
     }
 
     drawDiagram(diagramNumbers)
