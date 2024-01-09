@@ -77,12 +77,6 @@ function sortArray(direction = 'max'){
 }
 
 function sortColumns(direction){
-    if(direction === 'min'){
-        diagramNumbers = sortArray('min')
-    }
-    if(direction === 'max'){
-        diagramNumbers = sortArray()
-    }
-
+    diagramNumbers = sortArray(direction)
     drawDiagram(diagramNumbers)
 }
