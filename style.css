@@ -23,3 +23,11 @@ body{
     justify-content: center;
     align-items: center;
 }
+
+#sort{
+    gap: 24px;
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
