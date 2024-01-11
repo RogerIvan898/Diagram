@@ -75,15 +75,15 @@ function sortColumns(compareFunction){
         const firstColumn = columns[j]
         const secondColumn = columns[j + 1]
 
-        firstColumn.style.background = 'red'
-        secondColumn.style.background = 'red'
+        firstColumn.classList.add('column-compare')
+        secondColumn.classList.add('column-compare')
 
         if (compareResult > 0) {
-          swapColumns(j, j + 1)
+          await swapColumns(j, j + 1)
         }
         await setTimeout(() => {
-          firstColumn.style.background = 'darkseagreen'
-          secondColumn.style.background = 'darkseagreen'
+          firstColumn.classList.remove('column-compare')
+          secondColumn.classList.remove('column-compare')
         }, 1000)
 
         j++
@@ -99,7 +99,7 @@ function sortColumns(compareFunction){
   }, 1500)
 }
 
-function swapColumns(firstColumnIndex, secondColumnIndex){
+async function swapColumns(firstColumnIndex, secondColumnIndex){
   const firstColumn  = columns[firstColumnIndex]
   const secondColumn = columns[secondColumnIndex]
 
@@ -113,7 +113,7 @@ function swapColumns(firstColumnIndex, secondColumnIndex){
   columns[firstColumnIndex] = columns[secondColumnIndex]
   columns[secondColumnIndex] = tmp
 
-  setTimeout(() => {
+  await setTimeout(() => {
     if(columns[firstColumnIndex] && columns[secondColumnIndex]) {
       diagramElement.insertBefore(columns[secondColumnIndex], columns[firstColumnIndex])
 

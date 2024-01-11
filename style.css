@@ -25,6 +25,10 @@ body{
     align-items: center;
 }
 
+.column-compare{
+    background-color: red;
+}
+
 #sort{
     gap: 24px;
     margin-top: 24px;
