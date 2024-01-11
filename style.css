@@ -18,7 +18,7 @@ body{
 .diagram-column{
     background: darkseagreen;
     width: 100px;
-    transition: all 1s ease-out;
+    transition: transform 1s ease-out;
     border: 1px solid black;
     display: flex;
     justify-content: center;
@@ -36,9 +36,11 @@ body{
 .move-left{
     animation: moveColumnLeft 1s forwards;
 }
+
 .move-right{
     animation: moveColumnRight 1s forwards;
 }
+
 @keyframes moveColumnLeft {
     0%{
         transform: translateX(0);
@@ -47,6 +49,7 @@ body{
         transform: translateX(calc(100% + 10px));
     }
 }
+
 @keyframes moveColumnRight {
     0%{
         transform: translateX(0);

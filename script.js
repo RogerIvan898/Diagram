@@ -7,7 +7,7 @@ const diagramElement = document.getElementById('diagram')
 
 let columns = []
 let diagramNumbers = []
-let interval
+let interval = null
 
 buttonSortToMin.addEventListener('click', () => sortColumns(sortMin))
 buttonSortToMax.addEventListener('click', () => sortColumns(sortMax))
@@ -35,7 +35,6 @@ function createDiagram(){
 }
 
 function drawDiagram(numbers){
-  clearDiagram()
   const maxNumber = Math.max(...numbers)
 
   numbers.forEach((number, index) => {
@@ -69,10 +68,15 @@ function sortColumns(compareFunction){
 
   clearInterval(interval)
 
-  interval = setInterval(() => {
+  interval = setInterval(async () => {
     if(i < diagramNumbers.length){
       if(j < diagramNumbers.length - i - 1) {
         const compareResult = compareFunction(diagramNumbers[j], diagramNumbers[j + 1])
+        const firstColumn = columns[j]
+        const secondColumn = columns[j + 1]
+
+        firstColumn.style.background = 'red'
+        secondColumn.style.background = 'red'
 
         if (compareResult > 0) {
           swapColumns(j, j + 1)
@@ -81,6 +85,11 @@ function sortColumns(compareFunction){
           diagramNumbers[j] = diagramNumbers[j + 1]
           diagramNumbers[j + 1] = tmp
         }
+        await setTimeout(() => {
+          firstColumn.style.background = 'darkseagreen'
+          secondColumn.style.background = 'darkseagreen'
+        }, 1000)
+
         j++
       }
       else {
@@ -94,29 +103,29 @@ function sortColumns(compareFunction){
   }, 1500)
 }
 
-function swapColumns(index, index1){
-  const column  = columns[index]
-  const column1 = columns[index1]
+function swapColumns(firstColumnIndex, secondColumnIndex){
+  const column  = columns[firstColumnIndex]
+  const column1 = columns[secondColumnIndex]
 
-  const order = getComputedStyle(column).order
-  const order1 = getComputedStyle(column1).order
+  const order = column.style.order
+  const order1 = column1.style.order
 
   column1.classList.add('move-right')
   column.classList.add('move-left')
 
-  const tmp = columns[index]
-  columns[index] = columns[index1]
-  columns[index1] = tmp
+  const tmp = columns[firstColumnIndex]
+  columns[firstColumnIndex] = columns[secondColumnIndex]
+  columns[secondColumnIndex] = tmp
 
   setTimeout(() => {
-    diagramElement.insertBefore(column1, column)
+    diagramElement.insertBefore(columns[secondColumnIndex], column[firstColumnIndex])
 
     column.style.order = order1
     column1.style.order = order
 
     column.classList.remove('move-left')
     column1.classList.remove('move-right')
-  }, 1000)
+  }, 1100)
 }
 
 function sortMax(a, b) {
