@@ -68,62 +68,72 @@ function sortColumns(compareFunction){
 
   clearInterval(interval)
 
-  interval = setInterval(async () => {
-    if(i < columns.length){
-      if(j < columns.length - i - 1) {
-        const compareResult = compareFunction(columns[j].textContent, columns[j + 1].textContent)
-        const firstColumn = columns[j]
-        const secondColumn = columns[j + 1]
-
-        firstColumn.classList.add('column-compare')
-        secondColumn.classList.add('column-compare')
-
-        if (compareResult > 0) {
-          await swapColumns(j, j + 1)
+  interval = setInterval(() => {
+    if(document.visibilityState === 'visible') {
+      if (i < columns.length) {
+        if (j < columns.length - i - 1) {
+          swapColumns(j, j + 1, compareFunction)
+          j++
+        } else {
+          j = 0
+          i++
         }
-        await setTimeout(() => {
-          firstColumn.classList.remove('column-compare')
-          secondColumn.classList.remove('column-compare')
-        }, 1000)
-
-        j++
+      } else {
+        clearInterval(interval)
       }
-      else {
-        j = 0
-        i++
-      }
-    }
-    else {
-      clearInterval(interval)
     }
   }, 1500)
 }
 
-async function swapColumns(firstColumnIndex, secondColumnIndex){
-  const firstColumn  = columns[firstColumnIndex]
+async function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
+  const firstColumn = columns[firstColumnIndex]
   const secondColumn = columns[secondColumnIndex]
 
-  const firstColumnOrder = firstColumn.style.order
-  const secondColumnOrder = secondColumn.style.order
+  firstColumn.classList.add('column-compare')
+  secondColumn.classList.add('column-compare')
 
-  secondColumn.classList.add('move-right')
-  firstColumn.classList.add('move-left')
+  const compareResult = compareFunction(firstColumn.textContent, secondColumn.textContent)
+  if (compareResult > 0) {
+    const firstColumnOrder = firstColumn.style.order
+    const secondColumnOrder = secondColumn.style.order
 
-  const tmp = columns[firstColumnIndex]
-  columns[firstColumnIndex] = columns[secondColumnIndex]
-  columns[secondColumnIndex] = tmp
+    firstColumn.classList.add('move-left')
+    secondColumn.classList.add('move-right')
 
-  await setTimeout(() => {
-    if(columns[firstColumnIndex] && columns[secondColumnIndex]) {
-      diagramElement.insertBefore(columns[secondColumnIndex], columns[firstColumnIndex])
+    const animationPromise = new Promise(resolve => {
+      const handleTransitionEnd = () => {
+        firstColumn.removeEventListener('animationend', handleTransitionEnd)
+        resolve()
+      }
+
+      firstColumn.addEventListener('animationend', handleTransitionEnd)
+    })
+
+    await animationPromise
+
+    const tmp = columns[firstColumnIndex]
+    columns[firstColumnIndex] = columns[secondColumnIndex]
+    columns[secondColumnIndex] = tmp
+
+    if (columns[firstColumnIndex] && columns[secondColumnIndex]) {
+      diagramElement.insertBefore(firstColumn, secondColumn)
+
+      firstColumn.classList.remove('move-left', 'column-compare')
+      secondColumn.classList.remove('move-right', 'column-compare')
 
       firstColumn.style.order = secondColumnOrder
       secondColumn.style.order = firstColumnOrder
-
-      firstColumn.classList.remove('move-left')
-      secondColumn.classList.remove('move-right')
     }
-  }, 1000)
+  }
+  else {
+     const removeComparePromise = new Promise(resolve =>  setTimeout(() => {
+      firstColumn.classList.remove('column-compare')
+      secondColumn.classList.remove('column-compare')
+      resolve()
+    }, 1000))
+
+    await removeComparePromise
+  }
 }
 
 function sortMax(a, b) {
