@@ -63,19 +63,11 @@ function createElement(tagName, ...classes){
 }
 
 async function sortColumns(compareFunction){
-  let i = 0
-  let j = 0
-
-  while (i < columns.length) {
-    if (document.visibilityState === 'visible') {
+  for(let i = 0; i < columns.length && document.visibilityState === 'visible'; i++){
+    for(let j = 0; j < columns.length - i - 1 && document.visibilityState === 'visible'; j++){
       if (j < columns.length - i - 1) {
         await swapColumns(j, j + 1, compareFunction);
         await new Promise(resolve => requestAnimationFrame(resolve))
-        j++
-      }
-      else {
-        j = 0
-        i++
       }
     }
   }
@@ -84,13 +76,13 @@ async function sortColumns(compareFunction){
 async function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
   const firstColumn = columns[firstColumnIndex]
   const secondColumn = columns[secondColumnIndex]
-
+  
   firstColumn.classList.add('column-compare')
   secondColumn.classList.add('column-compare')
 
   const clearStylePromise = new Promise(resolve => setTimeout(() => {
     firstColumn.classList.remove('column-compare', 'move-left')
-    secondColumn.classList.remove('column-compare','move-right')
+    secondColumn.classList.remove('column-compare', 'move-right')
     resolve()
   }, 1000))
 
@@ -102,7 +94,7 @@ async function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction)
     firstColumn.classList.add('move-left')
     secondColumn.classList.add('move-right')
 
-    return Promise.all([clearStylePromise, new Promise(resolve => setTimeout(() => {
+    return new Promise(resolve => setTimeout(() => {
     const tmp = columns[firstColumnIndex]
     columns[firstColumnIndex] = columns[secondColumnIndex]
     columns[secondColumnIndex] = tmp
@@ -113,7 +105,6 @@ async function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction)
     secondColumn.style.order = firstColumnOrder
       resolve()
     }, 1000))
-    ])
   }
   return clearStylePromise
 }
