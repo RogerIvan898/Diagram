@@ -18,7 +18,7 @@ body{
 .diagram-column{
     background: darkseagreen;
     width: 100px;
-    transition: transform 1s ease-out;
+    transition: background-color 0.3s ease-out;
     border: 1px solid black;
     display: flex;
     justify-content: center;
@@ -38,27 +38,11 @@ body{
 }
 
 .move-left{
-    animation: moveColumnLeft 1s;
+    transition: all 1s ease-out;
+    transform: translateX(calc(100% + 10px));
 }
 
 .move-right{
-    animation: moveColumnRight 1s;
-}
-
-@keyframes moveColumnLeft {
-    0%{
-        transform: translateX(0);
-    }
-    100%{
-        transform: translateX(calc(100% + 10px));
-    }
-}
-
-@keyframes moveColumnRight {
-    0%{
-        transform: translateX(0);
-    }
-    100%{
-        transform: translateX(calc(-100% - 10px));
-    }
+    transition: all 1s ease-out;
+    transform: translateX(calc(-100% - 10px));
 }

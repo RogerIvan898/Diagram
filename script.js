@@ -62,27 +62,23 @@ function createElement(tagName, ...classes){
   return element
 }
 
-function sortColumns(compareFunction){
+async function sortColumns(compareFunction){
   let i = 0
   let j = 0
 
-  clearInterval(interval)
-
-  interval = setInterval(() => {
-    if(document.visibilityState === 'visible') {
-      if (i < columns.length) {
-        if (j < columns.length - i - 1) {
-          swapColumns(j, j + 1, compareFunction)
-          j++
-        } else {
-          j = 0
-          i++
-        }
-      } else {
-        clearInterval(interval)
+  while (i < columns.length) {
+    if (document.visibilityState === 'visible') {
+      if (j < columns.length - i - 1) {
+        await swapColumns(j, j + 1, compareFunction);
+        await new Promise(resolve => requestAnimationFrame(resolve))
+        j++
+      }
+      else {
+        j = 0
+        i++
       }
     }
-  }, 1500)
+  }
 }
 
 async function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
@@ -92,6 +88,12 @@ async function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction)
   firstColumn.classList.add('column-compare')
   secondColumn.classList.add('column-compare')
 
+  const clearStylePromise = new Promise(resolve => setTimeout(() => {
+    firstColumn.classList.remove('column-compare', 'move-left')
+    secondColumn.classList.remove('column-compare','move-right')
+    resolve()
+  }, 1000))
+
   const compareResult = compareFunction(firstColumn.textContent, secondColumn.textContent)
   if (compareResult > 0) {
     const firstColumnOrder = firstColumn.style.order
@@ -100,40 +102,20 @@ async function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction)
     firstColumn.classList.add('move-left')
     secondColumn.classList.add('move-right')
 
-    const animationPromise = new Promise(resolve => {
-      const handleTransitionEnd = () => {
-        firstColumn.removeEventListener('animationend', handleTransitionEnd)
-        resolve()
-      }
-
-      firstColumn.addEventListener('animationend', handleTransitionEnd)
-    })
-
-    await animationPromise
-
+    return Promise.all([clearStylePromise, new Promise(resolve => setTimeout(() => {
     const tmp = columns[firstColumnIndex]
     columns[firstColumnIndex] = columns[secondColumnIndex]
     columns[secondColumnIndex] = tmp
 
-    if (columns[firstColumnIndex] && columns[secondColumnIndex]) {
-      diagramElement.insertBefore(firstColumn, secondColumn)
+    diagramElement.insertBefore(firstColumn, secondColumn)
 
-      firstColumn.classList.remove('move-left', 'column-compare')
-      secondColumn.classList.remove('move-right', 'column-compare')
-
-      firstColumn.style.order = secondColumnOrder
-      secondColumn.style.order = firstColumnOrder
-    }
-  }
-  else {
-     const removeComparePromise = new Promise(resolve =>  setTimeout(() => {
-      firstColumn.classList.remove('column-compare')
-      secondColumn.classList.remove('column-compare')
+    firstColumn.style.order = secondColumnOrder
+    secondColumn.style.order = firstColumnOrder
       resolve()
     }, 1000))
-
-    await removeComparePromise
+    ])
   }
+  return clearStylePromise
 }
 
 function sortMax(a, b) {
