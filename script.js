@@ -5,12 +5,13 @@ const buttonSortToMax = document.getElementById('sort-max')
 const buttonSortToMin = document.getElementById('sort-min')
 const diagramElement = document.getElementById('diagram')
 
+let debounceTimer = null
 let columns = []
 let diagramNumbers = []
-let interval = null
+let isSorting = false
 
-buttonSortToMin.addEventListener('click', () => sortColumns(sortMin))
-buttonSortToMax.addEventListener('click', () => sortColumns(sortMax))
+buttonSortToMin.addEventListener('click', () => startSorting(sortMin))
+buttonSortToMax.addEventListener('click', () => startSorting(sortMax))
 buttonCreateDiagram.addEventListener('click', createDiagram)
 
 function getNumbers(){
@@ -22,10 +23,12 @@ function getNumbers(){
 
 function createDiagram(){
   const numbers = getNumbers()
-  if(numbers){
-    clearInterval(interval)
+  if(numbers.length){
     clearDiagram()
     drawDiagram(numbers)
+
+    clearTimeout(debounceTimer)
+    isSorting = false
 
     diagramNumbers = [...numbers]
 
@@ -62,51 +65,69 @@ function createElement(tagName, ...classes){
   return element
 }
 
+function startSorting(compareFunction) {
+  clearTimeout(debounceTimer)
+
+  debounceTimer = setTimeout(async () => {
+    if (isSorting) {
+      isSorting = false
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+
+    isSorting = true
+    await sortColumns(compareFunction)
+    isSorting = false
+  }, 1000)
+}
+
 async function sortColumns(compareFunction){
-  for(let i = 0; i < columns.length && document.visibilityState === 'visible'; i++){
-    for(let j = 0; j < columns.length - i - 1 && document.visibilityState === 'visible'; j++){
+  for(let i = 0; i < columns.length; i++){
+    for(let j = 0; j < columns.length - i - 1; j++){
+      if(!isSorting) {
+        return
+      }
       if (j < columns.length - i - 1) {
-        await swapColumns(j, j + 1, compareFunction);
-        await new Promise(resolve => requestAnimationFrame(resolve))
+        await swapColumns(j, j + 1, compareFunction)
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
     }
   }
 }
 
-async function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
-  const firstColumn = columns[firstColumnIndex]
-  const secondColumn = columns[secondColumnIndex]
-  
-  firstColumn.classList.add('column-compare')
-  secondColumn.classList.add('column-compare')
+function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
+  return new Promise(async (resolve) => {
+    const firstColumn = columns[firstColumnIndex]
+    const secondColumn = columns[secondColumnIndex]
 
-  const clearStylePromise = new Promise(resolve => setTimeout(() => {
+    firstColumn.classList.add('column-compare')
+    secondColumn.classList.add('column-compare')
+
+    const compareResult = compareFunction(firstColumn.textContent, secondColumn.textContent)
+    if(compareResult > 0 && isSorting) {
+      const firstColumnOrder = firstColumn.style.order
+      const secondColumnOrder = secondColumn.style.order
+
+      firstColumn.classList.add('move-left')
+      secondColumn.classList.add('move-right')
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      const tmp = columns[firstColumnIndex]
+      columns[firstColumnIndex] = columns[secondColumnIndex]
+      columns[secondColumnIndex] = tmp
+
+      diagramElement.insertBefore(columns[firstColumnIndex], columns[secondColumnIndex])
+
+      firstColumn.style.order = secondColumnOrder
+      secondColumn.style.order = firstColumnOrder
+    }
+    else {
+      await new Promise(resolve => setTimeout(resolve, 300))
+    }
+
     firstColumn.classList.remove('column-compare', 'move-left')
     secondColumn.classList.remove('column-compare', 'move-right')
     resolve()
-  }, 1000))
-
-  const compareResult = compareFunction(firstColumn.textContent, secondColumn.textContent)
-  if (compareResult > 0) {
-    const firstColumnOrder = firstColumn.style.order
-    const secondColumnOrder = secondColumn.style.order
-
-    firstColumn.classList.add('move-left')
-    secondColumn.classList.add('move-right')
-
-    return new Promise(resolve => setTimeout(() => {
-    const tmp = columns[firstColumnIndex]
-    columns[firstColumnIndex] = columns[secondColumnIndex]
-    columns[secondColumnIndex] = tmp
-
-    diagramElement.insertBefore(firstColumn, secondColumn)
-
-    firstColumn.style.order = secondColumnOrder
-    secondColumn.style.order = firstColumnOrder
-      resolve()
-    }, 1000))
-  }
-  return clearStylePromise
+  })
 }
 
 function sortMax(a, b) {
