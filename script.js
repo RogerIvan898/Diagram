@@ -24,12 +24,12 @@ function getNumbers(){
 async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
-    if(diagramElement.hasChildNodes()) {
+    if(columns.length) {
       clearTimeout(debounceTimer)
       isSorting = false
-      await delay(1500)
+      await delay(15000)
     }
-
+    console.log(989898)
     clearDiagram()
     drawDiagram(numbers)
 
@@ -89,10 +89,8 @@ async function sortColumns(compareFunction){
       if(!isSorting) {
         return
       }
-      if (j < columns.length - i - 1) {
-        await swapColumns(j, j + 1, compareFunction)
-        await delay(100)
-      }
+      await swapColumns(j, j + 1, compareFunction)
+      await delay(100)
     }
   }
   isSorting = false
