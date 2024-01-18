@@ -27,9 +27,8 @@ async function createDiagram(){
     if(columns.length) {
       clearTimeout(debounceTimer)
       isSorting = false
-      await delay(15000)
+      await delay(1500)
     }
-    console.log(989898)
     clearDiagram()
     drawDiagram(numbers)
 
@@ -89,6 +88,7 @@ async function sortColumns(compareFunction){
       if(!isSorting) {
         return
       }
+
       await swapColumns(j, j + 1, compareFunction)
       await delay(100)
     }
