@@ -21,14 +21,17 @@ function getNumbers(){
   return numbers.map(number => Number(number))
 }
 
-function createDiagram(){
+async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
+    if(diagramElement.hasChildNodes()) {
+      clearTimeout(debounceTimer)
+      isSorting = false
+      await delay(1500)
+    }
+
     clearDiagram()
     drawDiagram(numbers)
-
-    clearTimeout(debounceTimer)
-    isSorting = false
 
     diagramNumbers = [...numbers]
 
@@ -39,6 +42,7 @@ function createDiagram(){
 
 function drawDiagram(numbers){
   const maxNumber = Math.max(...numbers)
+  columns = []
 
   numbers.forEach((number, index) => {
     const newColumnElement = createElement('div','diagram-column')
@@ -48,8 +52,8 @@ function drawDiagram(numbers){
     newColumnElement.style.order = index
 
     diagramElement.appendChild(newColumnElement)
+    columns.push(newColumnElement)
   })
-  columns = Array.from(document.getElementsByClassName('diagram-column'))
 }
 
 function clearDiagram(){
@@ -71,12 +75,11 @@ function startSorting(compareFunction) {
   debounceTimer = setTimeout(async () => {
     if (isSorting) {
       isSorting = false
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await delay(1400)
     }
 
     isSorting = true
     await sortColumns(compareFunction)
-    isSorting = false
   }, 1000)
 }
 
@@ -88,10 +91,11 @@ async function sortColumns(compareFunction){
       }
       if (j < columns.length - i - 1) {
         await swapColumns(j, j + 1, compareFunction)
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await delay(100)
       }
     }
   }
+  isSorting = false
 }
 
 function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
@@ -109,7 +113,7 @@ function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
 
       firstColumn.classList.add('move-left')
       secondColumn.classList.add('move-right')
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await delay(1000)
 
       const tmp = columns[firstColumnIndex]
       columns[firstColumnIndex] = columns[secondColumnIndex]
@@ -121,13 +125,17 @@ function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
       secondColumn.style.order = firstColumnOrder
     }
     else {
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await delay(1000)
     }
 
     firstColumn.classList.remove('column-compare', 'move-left')
     secondColumn.classList.remove('column-compare', 'move-right')
     resolve()
   })
+}
+
+function delay(timeout){
+   return new Promise(resolve => setTimeout(resolve, timeout))
 }
 
 function sortMax(a, b) {
