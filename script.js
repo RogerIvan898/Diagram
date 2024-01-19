@@ -8,6 +8,8 @@ const diagramElement = document.getElementById('diagram')
 let sortDelayTimer = null
 let columns = []
 let isSorting = false
+let startSortingDelay = null
+let currentSortingPromise = null
 
 buttonSortToMin.addEventListener('click', () => startSorting(sortMin))
 buttonSortToMax.addEventListener('click', () => startSorting(sortMax))
@@ -23,11 +25,11 @@ function getNumbers(){
 async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
-    if(isSorting) {
-      clearTimeout(sortDelayTimer)
-      isSorting = false
-      await delay(1600)
-    }
+    clearTimeout(startSortingDelay)
+
+    isSorting = false
+    await currentSortingPromise
+
     clearDiagram()
     drawDiagram(numbers)
 
@@ -65,30 +67,37 @@ function createElement(tagName, ...classes){
   return element
 }
 
-function startSorting(compareFunction) {
-  clearTimeout(sortDelayTimer)
-    if (isSorting) {
-      isSorting = false
-    }
-    sortDelayTimer = setTimeout(async () => {
+async function startSorting(compareFunction) {
+  clearTimeout(startSortingDelay)
+
+  startSortingDelay = setTimeout(async () => {
+    isSorting = false
+    await currentSortingPromise
+
+    currentSortingPromise = (async (resolve) => {
       isSorting = true
-      await sortColumns(compareFunction)
-    }, 1600)
+      const generator = sortColumns(compareFunction)
+      await generator.next()
+
+      while (isSorting) {
+        await generator.next()
+      }
+    })()
+  }, 400)
 }
 
-async function sortColumns(compareFunction){
+async function* sortColumns(compareFunction){
   let compareResult = null
-  for(let i = 0; i < columns.length; i++){
-    for(let j = 0; j < columns.length - i - 1; j++){
-      if(!isSorting) {
-        return
-      }
+
+  for (let i = 0; i < columns.length; i++) {
+    for (let j = 0; j < columns.length - i - 1; j++) {
       compareResult = compareFunction(columns[j].textContent, columns[j + 1].textContent)
       await animateComparison(j, j + 1)
-      if(compareResult > 0) {
+      if (compareResult > 0) {
         await animateSwap(j, j + 1)
         swapColumns(j, j + 1)
       }
+    yield
     }
   }
   isSorting = false
@@ -99,19 +108,16 @@ function swapColumns(firstColumnIndex, secondColumnIndex) {
   const secondColumn = columns[secondColumnIndex]
   let tmp = null
 
-  tmp = document.createElement('div')
-  diagramElement.insertBefore(tmp, firstColumn)
-  diagramElement.insertBefore(firstColumn, secondColumn)
-  diagramElement.insertBefore(secondColumn, tmp)
-  tmp.remove()
+    tmp = firstColumn.style.order
+    firstColumn.style.order = secondColumn.style.order
+    secondColumn.style.order = tmp
 
-  tmp = firstColumn.style.order
-  firstColumn.style.order = secondColumn.style.order
-  secondColumn.style.order = tmp
+    diagramElement.insertBefore(firstColumn, secondColumn)
+    diagramElement.insertBefore(secondColumn, firstColumn)
 
-  tmp = columns[firstColumnIndex]
-  columns[firstColumnIndex] = columns[secondColumnIndex]
-  columns[secondColumnIndex] = tmp
+    tmp = columns[firstColumnIndex]
+    columns[firstColumnIndex] = columns[secondColumnIndex]
+    columns[secondColumnIndex] = tmp
 }
 
 async function animateComparison(firstColumnIndex, secondColumnIndex){
