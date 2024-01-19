@@ -5,9 +5,8 @@ const buttonSortToMax = document.getElementById('sort-max')
 const buttonSortToMin = document.getElementById('sort-min')
 const diagramElement = document.getElementById('diagram')
 
-let debounceTimer = null
+let sortDelayTimer = null
 let columns = []
-let diagramNumbers = []
 let isSorting = false
 
 buttonSortToMin.addEventListener('click', () => startSorting(sortMin))
@@ -24,15 +23,13 @@ function getNumbers(){
 async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
-    if(columns.length) {
-      clearTimeout(debounceTimer)
+    if(isSorting) {
+      clearTimeout(sortDelayTimer)
       isSorting = false
-      await delay(1500)
+      await delay(1600)
     }
     clearDiagram()
     drawDiagram(numbers)
-
-    diagramNumbers = [...numbers]
 
     buttonSortToMax.disabled = false
     buttonSortToMin.disabled = false
@@ -69,67 +66,76 @@ function createElement(tagName, ...classes){
 }
 
 function startSorting(compareFunction) {
-  clearTimeout(debounceTimer)
-
-  debounceTimer = setTimeout(async () => {
+  clearTimeout(sortDelayTimer)
     if (isSorting) {
       isSorting = false
-      await delay(1400)
     }
-
-    isSorting = true
-    await sortColumns(compareFunction)
-  }, 1000)
+    sortDelayTimer = setTimeout(async () => {
+      isSorting = true
+      await sortColumns(compareFunction)
+    }, 1600)
 }
 
 async function sortColumns(compareFunction){
+  let compareResult = null
   for(let i = 0; i < columns.length; i++){
     for(let j = 0; j < columns.length - i - 1; j++){
       if(!isSorting) {
         return
       }
-
-      await swapColumns(j, j + 1, compareFunction)
-      await delay(100)
+      compareResult = compareFunction(columns[j].textContent, columns[j + 1].textContent)
+      await animateComparison(j, j + 1)
+      if(compareResult > 0) {
+        await animateSwap(j, j + 1)
+        swapColumns(j, j + 1)
+      }
     }
   }
   isSorting = false
 }
 
-function swapColumns(firstColumnIndex, secondColumnIndex, compareFunction) {
-  return new Promise(async (resolve) => {
-    const firstColumn = columns[firstColumnIndex]
-    const secondColumn = columns[secondColumnIndex]
+function swapColumns(firstColumnIndex, secondColumnIndex) {
+  const firstColumn = columns[firstColumnIndex]
+  const secondColumn = columns[secondColumnIndex]
+  let tmp = null
 
-    firstColumn.classList.add('column-compare')
-    secondColumn.classList.add('column-compare')
+  tmp = document.createElement('div')
+  diagramElement.insertBefore(tmp, firstColumn)
+  diagramElement.insertBefore(firstColumn, secondColumn)
+  diagramElement.insertBefore(secondColumn, tmp)
+  tmp.remove()
 
-    const compareResult = compareFunction(firstColumn.textContent, secondColumn.textContent)
-    if(compareResult > 0 && isSorting) {
-      const firstColumnOrder = firstColumn.style.order
-      const secondColumnOrder = secondColumn.style.order
+  tmp = firstColumn.style.order
+  firstColumn.style.order = secondColumn.style.order
+  secondColumn.style.order = tmp
 
-      firstColumn.classList.add('move-left')
-      secondColumn.classList.add('move-right')
-      await delay(1000)
+  tmp = columns[firstColumnIndex]
+  columns[firstColumnIndex] = columns[secondColumnIndex]
+  columns[secondColumnIndex] = tmp
+}
 
-      const tmp = columns[firstColumnIndex]
-      columns[firstColumnIndex] = columns[secondColumnIndex]
-      columns[secondColumnIndex] = tmp
+async function animateComparison(firstColumnIndex, secondColumnIndex){
+  const firstColumn = columns[firstColumnIndex]
+  const secondColumn = columns[secondColumnIndex]
 
-      diagramElement.insertBefore(columns[firstColumnIndex], columns[secondColumnIndex])
+  firstColumn.classList.add('column-compare')
+  secondColumn.classList.add('column-compare')
 
-      firstColumn.style.order = secondColumnOrder
-      secondColumn.style.order = firstColumnOrder
-    }
-    else {
-      await delay(1000)
-    }
+  await delay(800)
+  firstColumn.classList.remove('column-compare')
+  secondColumn.classList.remove('column-compare')
+}
 
-    firstColumn.classList.remove('column-compare', 'move-left')
-    secondColumn.classList.remove('column-compare', 'move-right')
-    resolve()
-  })
+async function animateSwap(firstColumnIndex, secondColumnIndex){
+  const firstColumn = columns[firstColumnIndex]
+  const secondColumn = columns[secondColumnIndex]
+
+  firstColumn.classList.add('move-right')
+  secondColumn.classList.add('move-left')
+
+  await delay(800)
+  firstColumn.classList.remove('move-right')
+  secondColumn.classList.remove('move-left')
 }
 
 function delay(timeout){

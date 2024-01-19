@@ -16,9 +16,9 @@ body{
 }
 
 .diagram-column{
+    transition: all .8s;
     background: darkseagreen;
     width: 100px;
-    transition: background-color 0.3s ease-out;
     border: 1px solid black;
     display: flex;
     justify-content: center;
@@ -37,12 +37,10 @@ body{
     align-items: center;
 }
 
-.move-left{
-    transition: all 1s ease-out;
+.move-right{
     transform: translateX(calc(100% + 10px));
 }
 
-.move-right{
-    transition: all 1s ease-out;
+.move-left{
     transform: translateX(calc(-100% - 10px));
 }
