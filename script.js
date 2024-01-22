@@ -72,7 +72,11 @@ async function sortColumns(compareFunction){
       }
     }
   }
+
   buttonSortToMin.disabled = false
+
+  buttonSortToMax.disabled = false
+
   buttonSortToMax.disabled = false
   buttonCreateDiagram.disabled = false
 }
