@@ -60,6 +60,7 @@ function createElement(tagName, ...classes){
 async function sortColumns(compareFunction){
   buttonSortToMin.disabled = true
   buttonSortToMax.disabled = true
+  buttonCreateDiagram.disabled = true
 
   for (let i = 0; i < columns.length; i++) {
     for (let j = 0; j < columns.length - i - 1; j++) {
@@ -71,9 +72,9 @@ async function sortColumns(compareFunction){
       }
     }
   }
-
+  buttonSortToMin.disabled = false
   buttonSortToMax.disabled = false
-  buttonSortToMax.disabled = false
+  buttonCreateDiagram.disabled = false
 }
 
 function swapColumns(firstColumnIndex, secondColumnIndex) {
