@@ -15,7 +15,7 @@ function getNumbers(){
   const inputText = document.getElementById('diagram-options-input').value
   const numbers = inputText.split(' ').filter(number => !isNaN(Number(number)) && number !== '')
 
-  return numbers.map(number => Number(number))
+  return numbers.map(Number)
 }
 
 async function createDiagram(){
@@ -23,21 +23,18 @@ async function createDiagram(){
   if(numbers.length){
     clearDiagram()
     drawDiagram(numbers)
-    buttonSortToMax.disabled = false
-    buttonSortToMin.disabled = false
+    enableButtons(buttonSortToMin, buttonSortToMax)
   }
 }
 
 function drawDiagram(numbers){
   const maxNumber = Math.max(...numbers)
-  columns = []
 
-  numbers.forEach((number, index) => {
-    const newColumnElement = createElement('div','diagram-column')
+  numbers.forEach((number) => {
+    const newColumnElement = createElement('div', 'diagram-column')
 
-    newColumnElement.style.height = `${(MAX_COLUMN_HEIGHT*number)/maxNumber}%`
+    newColumnElement.style.height = `${(MAX_COLUMN_HEIGHT * number) / maxNumber}%`
     newColumnElement.textContent = number
-    newColumnElement.style.order = index
 
     diagramElement.appendChild(newColumnElement)
     columns.push(newColumnElement)
@@ -46,6 +43,7 @@ function drawDiagram(numbers){
 
 function clearDiagram(){
   columns.forEach(column => column.remove())
+  columns = []
 }
 
 function createElement(tagName, ...classes){
@@ -57,34 +55,26 @@ function createElement(tagName, ...classes){
   return element
 }
 
-async function sortColumns(compareFunction){
-  buttonSortToMin.disabled = true
-  buttonSortToMax.disabled = true
-  buttonCreateDiagram.disabled = true
+async function sortColumns(compareFunction) {
+  disableButtons(buttonSortToMax, buttonSortToMin, buttonCreateDiagram)
 
   for (let i = 0; i < columns.length; i++) {
     for (let j = 0; j < columns.length - i - 1; j++) {
       const compareResult = compareFunction(columns[j].textContent, columns[j + 1].textContent)
-      await animateComparison(j, j + 1)
+      await applyColumnAnimation(j, j + 1, ['column-compare', 'column-compare'])
       if (compareResult > 0) {
-        await animateSwap(j, j + 1)
+        await applyColumnAnimation(j, j + 1, ['move-right', 'move-left'])
         swapColumns(j, j + 1)
       }
     }
   }
 
-  buttonSortToMin.disabled = false
-  buttonSortToMax.disabled = false
-  buttonCreateDiagram.disabled = false
+  enableButtons(buttonSortToMax, buttonSortToMin, buttonCreateDiagram)
 }
 
 function swapColumns(firstColumnIndex, secondColumnIndex) {
   const firstColumn = columns[firstColumnIndex]
   const secondColumn = columns[secondColumnIndex]
-
-  const tmpOrder = firstColumn.style.order
-  firstColumn.style.order = secondColumn.style.order
-  secondColumn.style.order = tmpOrder
 
   diagramElement.insertBefore(firstColumn, secondColumn)
   diagramElement.insertBefore(secondColumn, firstColumn)
@@ -94,32 +84,28 @@ function swapColumns(firstColumnIndex, secondColumnIndex) {
   columns[secondColumnIndex] = tmp
 }
 
-async function animateComparison(firstColumnIndex, secondColumnIndex){
+async function applyColumnAnimation(firstColumnIndex, secondColumnIndex, styles){
   const firstColumn = columns[firstColumnIndex]
   const secondColumn = columns[secondColumnIndex]
 
-  firstColumn.classList.add('column-compare')
-  secondColumn.classList.add('column-compare')
+  firstColumn.classList.add(styles[0])
+  secondColumn.classList.add(styles[1])
 
   await delay(800)
-  firstColumn.classList.remove('column-compare')
-  secondColumn.classList.remove('column-compare')
-}
-
-async function animateSwap(firstColumnIndex, secondColumnIndex){
-  const firstColumn = columns[firstColumnIndex]
-  const secondColumn = columns[secondColumnIndex]
-
-  firstColumn.classList.add('move-right')
-  secondColumn.classList.add('move-left')
-
-  await delay(800)
-  firstColumn.classList.remove('move-right')
-  secondColumn.classList.remove('move-left')
+  firstColumn.classList.remove(styles[0])
+  secondColumn.classList.remove(styles[1])
 }
 
 function delay(timeout){
    return new Promise(resolve => setTimeout(resolve, timeout))
+}
+
+function disableButtons(...buttons){
+  buttons.forEach(button => button.disabled = true)
+}
+
+function enableButtons(...buttons){
+  buttons.forEach(button => button.disabled = false)
 }
 
 function sortMax(a, b) {
