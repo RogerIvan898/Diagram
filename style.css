@@ -16,7 +16,7 @@ body{
 }
 
 .diagram-column{
-    transition: all .8s;
+    transition: all 0.8s;
     background: darkseagreen;
     width: 100px;
     border: 1px solid black;

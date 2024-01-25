@@ -6,6 +6,8 @@ const buttonSortToMin = document.getElementById('sort-min')
 const diagramElement = document.getElementById('diagram')
 
 let columns = []
+let isSorting = false
+let cancelSorting = () => {}
 
 buttonSortToMin.addEventListener('click', () => sortColumns(sortMin))
 buttonSortToMax.addEventListener('click', () => sortColumns(sortMax))
@@ -21,8 +23,13 @@ function getNumbers(){
 async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
+    isSorting = false
+    
+    cancelSorting()
     clearDiagram()
+
     drawDiagram(numbers)
+
     enableButtons(buttonSortToMin, buttonSortToMax)
   }
 }
@@ -30,7 +37,7 @@ async function createDiagram(){
 function drawDiagram(numbers){
   const maxNumber = Math.max(...numbers)
 
-  numbers.forEach((number) => {
+  numbers.forEach(number => {
     const newColumnElement = createElement('div', 'diagram-column')
 
     newColumnElement.style.height = `${(MAX_COLUMN_HEIGHT * number) / maxNumber}%`
@@ -55,24 +62,70 @@ function createElement(tagName, ...classes){
   return element
 }
 
-async function sortColumns(compareFunction) {
-  disableButtons(buttonSortToMax, buttonSortToMin, buttonCreateDiagram)
+async function sortColumns(compareFunction){
+  cancelSorting()
 
-  for (let i = 0; i < columns.length; i++) {
+  let cancelPromise = new Promise(cancel => cancelSorting = () => {
+    isSorting = false
+    cancel()
+  })
+
+  let firstColumn = columns[0]
+  let secondColumn = columns[1]
+
+  addCompareStyle(firstColumn, secondColumn)
+  await delay(400)
+
+  isSorting = true
+
+  for(let i = 0; i < columns.length; i++) {
     for (let j = 0; j < columns.length - i - 1; j++) {
-      const compareResult = compareFunction(columns[j].textContent, columns[j + 1].textContent)
-      await applyColumnAnimation(j, j + 1, ['column-compare', 'column-compare'])
-      if (compareResult > 0) {
-        await applyColumnAnimation(j, j + 1, ['move-right', 'move-left'])
-        swapColumns(j, j + 1)
+      firstColumn = columns[j]
+      secondColumn = columns[j + 1]
+
+      const result = await Promise.race([
+        cancelPromise,
+        new Promise(async (resolve) => {
+          addCompareStyle(firstColumn, secondColumn)
+          await delay(800)
+
+          resolve(async () => {
+            const compareResult = compareFunction(firstColumn.textContent, secondColumn.textContent)
+            if (compareResult > 0 && isSorting) {
+              firstColumn.style.transform = 'translateX(calc(100% + 10px))'
+              secondColumn.style.transform = 'translateX(calc(-100% - 10px))'
+
+              await delay(800)
+              if(isSorting) {
+                swapColumns(j, j + 1)
+              }
+                firstColumn.style.transform = 'translateX(0)'
+                secondColumn.style.transform = 'translateX(0)'
+            }
+          })
+        })
+      ])
+
+      result && await result()
+
+      removeCompareStyle(firstColumn, secondColumn)
+
+      if(!result){
+        return
       }
     }
   }
-
-  enableButtons(buttonSortToMax, buttonSortToMin, buttonCreateDiagram)
 }
 
-function swapColumns(firstColumnIndex, secondColumnIndex) {
+function addCompareStyle(...columns){
+  columns.forEach(column => column.classList.add('column-compare'))
+}
+
+function removeCompareStyle(...columns){
+  columns.forEach(column => column.classList.remove('column-compare'))
+}
+
+async function swapColumns(firstColumnIndex, secondColumnIndex) {
   const firstColumn = columns[firstColumnIndex]
   const secondColumn = columns[secondColumnIndex]
 
@@ -84,20 +137,8 @@ function swapColumns(firstColumnIndex, secondColumnIndex) {
   columns[secondColumnIndex] = tmp
 }
 
-async function applyColumnAnimation(firstColumnIndex, secondColumnIndex, styles){
-  const firstColumn = columns[firstColumnIndex]
-  const secondColumn = columns[secondColumnIndex]
-
-  firstColumn.classList.add(styles[0])
-  secondColumn.classList.add(styles[1])
-
-  await delay(800)
-  firstColumn.classList.remove(styles[0])
-  secondColumn.classList.remove(styles[1])
-}
-
 function delay(timeout){
-   return new Promise(resolve => setTimeout(resolve, timeout))
+  return new Promise(resolve => setTimeout(resolve, timeout))
 }
 
 function disableButtons(...buttons){
