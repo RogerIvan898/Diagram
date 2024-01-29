@@ -63,8 +63,6 @@ function createElement(tagName, ...classes){
   return element
 }
 
-
-
 async function sortColumns(compareFunction){
   if(sorting.isSwap){
     sorting.state = false
