@@ -6,9 +6,11 @@ const buttonSortToMin = document.getElementById('sort-min')
 const diagramElement = document.getElementById('diagram')
 
 let columns = []
-let isSorting = false
-let cancelSorting = () => {}
-let currentSorting = null
+const sorting = {
+  state: false,
+  isSwap: false,
+  cancel: () => {},
+}
 
 buttonSortToMin.addEventListener('click', () => sortColumns(sortMin))
 buttonSortToMax.addEventListener('click', () => sortColumns(sortMax))
@@ -24,7 +26,7 @@ function getNumbers(){
 async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
-    cancelSorting()
+    sorting.cancel()
     clearDiagram()
 
     drawDiagram(numbers)
@@ -61,29 +63,36 @@ function createElement(tagName, ...classes){
   return element
 }
 
+
+
 async function sortColumns(compareFunction){
-  cancelSorting()
-  isSorting = true
+  if(sorting.isSwap){
+    sorting.state = false
+    await delay(800)
+  }
+  sorting.cancel()
+  sorting.state = true
 
   for(let i = 0; i < columns.length; i++) {
     for (let j = 0; j < columns.length - i - 1; j++) {
-      let firstColumn = columns[j]
-      let secondColumn = columns[j + 1]
+      const firstColumn = columns[j]
+      const secondColumn = columns[j + 1]
       let swap = null
 
       await Promise.all([
         animateColumnSwap(firstColumn, secondColumn, compareFunction),
         new Promise(async (resolve) => {
-          addCompareStyle(firstColumn, secondColumn)
+          addStyle('column-compare', firstColumn, secondColumn)
           await delay(800)
+
           resolve()
         })
       ]).then(results => swap = results[0])
 
       swap && await swap()
-      removeCompareStyle(firstColumn, secondColumn)
+      removeStyle('column-compare', firstColumn, secondColumn)
 
-      if(!isSorting || !swap){
+      if(!sorting.state || !swap){
         return
       }
     }
@@ -91,8 +100,8 @@ async function sortColumns(compareFunction){
 }
 
 function animateColumnSwap(firstColumn, secondColumn, compareFunction){
-  const cancelPromise = new Promise(resolve => cancelSorting = () => {
-    isSorting = false
+  const cancelPromise = new Promise(resolve => sorting.cancel = () => {
+    sorting.state = false
     resolve()
   })
 
@@ -102,31 +111,33 @@ function animateColumnSwap(firstColumn, secondColumn, compareFunction){
       await delay(800)
 
       resolve(async () => {
-          const compareResult = compareFunction(+firstColumn.textContent, +secondColumn.textContent)
-          if (compareResult > 0 && isSorting) {
-            firstColumn.style.transform = 'translateX(calc(100% + 10px))'
-            secondColumn.style.transform = 'translateX(calc((-100% - 10px))'
+        sorting.isSwap = true
+        const compareResult = compareFunction(+firstColumn.textContent, +secondColumn.textContent)
+        if (compareResult > 0 && sorting.state) {
+          addStyle('move-right', firstColumn)
+          addStyle('move-left', secondColumn)
 
-            await delay(800)
+          await delay(800)
 
-            if (isSorting) {
-              swapColumns(firstColumn, secondColumn)
-            }
-
-            firstColumn.style.transform = 'translateX(0)'
-            secondColumn.style.transform = 'translateX(0)'
+          if (sorting.state) {
+            swapColumns(firstColumn, secondColumn)
           }
-        })
+
+          removeStyle('move-right', firstColumn)
+          removeStyle('move-left', secondColumn)
+        }
+        sorting.isSwap = false
+      })
     })
   ])
 }
 
-function addCompareStyle(...columns){
-  columns.forEach(column => column.classList.add('column-compare'))
+function addStyle(style, ...elements){
+  elements.forEach(element => element.classList.add(style))
 }
 
-function removeCompareStyle(...columns){
-  columns.forEach(column => column.classList.remove('column-compare'))
+function removeStyle(style, ...elements){
+  elements.forEach(element => element.classList.remove(style))
 }
 
 async function swapColumns(firstColumn, secondColumn) {
