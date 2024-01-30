@@ -66,7 +66,6 @@ function createElement(tagName, ...classes){
 
 async function sortColumns(compareFunction){
   if(sortingController.isSwap){
-    sortingController.cancel()
     await delay(ANIMATION_DURATION)
   }
   sortingController.cancel()
@@ -78,7 +77,7 @@ async function sortColumns(compareFunction){
       const secondColumn = columns[j + 1]
 
       addStyle('column-compare', firstColumn, secondColumn)
-      const iterationResult = await processSortIteration(firstColumn, secondColumn)
+      const iterationResult = await processSortIteration()
 
       if (iterationResult){
         await animateColumnsSwap(firstColumn, secondColumn, compareFunction)
@@ -93,7 +92,7 @@ async function sortColumns(compareFunction){
   }
 }
 
-function processSortIteration(firstColumn, secondColumn){
+function processSortIteration(){
   return Promise.race([
     new Promise(async (resolve) => {
       await delay(ANIMATION_DURATION)
