@@ -1,4 +1,5 @@
 const MAX_COLUMN_HEIGHT = 100
+const ANIMATION_DURATION = 800
 
 const buttonCreateDiagram = document.getElementById('diagram-options-button')
 const buttonSortToMax = document.getElementById('sort-max')
@@ -6,8 +7,8 @@ const buttonSortToMin = document.getElementById('sort-min')
 const diagramElement = document.getElementById('diagram')
 
 let columns = []
-const sorting = {
-  state: false,
+const sortingController = {
+  isSorting: false,
   isSwap: false,
   cancel: () => {},
 }
@@ -26,12 +27,12 @@ function getNumbers(){
 async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
-    sorting.cancel()
+    sortingController.cancel()
     clearDiagram()
 
     drawDiagram(numbers)
 
-    enableButtons(buttonSortToMin, buttonSortToMax)
+    setButtonsDisable(false, buttonSortToMin, buttonSortToMax)
   }
 }
 
@@ -64,70 +65,70 @@ function createElement(tagName, ...classes){
 }
 
 async function sortColumns(compareFunction){
-  if(sorting.isSwap){
-    sorting.state = false
-    await delay(800)
+  if(sortingController.isSwap){
+    sortingController.cancel()
+    await delay(ANIMATION_DURATION)
   }
-  sorting.cancel()
-  sorting.state = true
+  sortingController.cancel()
+  sortingController.isSorting = true
 
   for(let i = 0; i < columns.length; i++) {
     for (let j = 0; j < columns.length - i - 1; j++) {
       const firstColumn = columns[j]
       const secondColumn = columns[j + 1]
-      let swap = null
 
-      await Promise.all([
-        animateColumnSwap(firstColumn, secondColumn, compareFunction),
-        new Promise(async (resolve) => {
-          addStyle('column-compare', firstColumn, secondColumn)
-          await delay(800)
+      addStyle('column-compare', firstColumn, secondColumn)
+      const iterationResult = await processSortIteration(firstColumn, secondColumn)
 
-          resolve()
-        })
-      ]).then(results => swap = results[0])
+      if (iterationResult){
+        await animateColumnsSwap(firstColumn, secondColumn, compareFunction)
+      }
 
-      swap && await swap()
       removeStyle('column-compare', firstColumn, secondColumn)
 
-      if(!sorting.state || !swap){
+      if (!iterationResult || !sortingController.isSorting) {
         return
       }
     }
   }
 }
 
-function animateColumnSwap(firstColumn, secondColumn, compareFunction){
-  const cancelPromise = new Promise(resolve => sorting.cancel = () => {
-    sorting.state = false
-    resolve()
-  })
-
+function processSortIteration(firstColumn, secondColumn){
   return Promise.race([
-    cancelPromise,
     new Promise(async (resolve) => {
-      await delay(800)
-
-      resolve(async () => {
-        sorting.isSwap = true
-        const compareResult = compareFunction(+firstColumn.textContent, +secondColumn.textContent)
-        if (compareResult > 0 && sorting.state) {
-          addStyle('move-right', firstColumn)
-          addStyle('move-left', secondColumn)
-
-          await delay(800)
-
-          if (sorting.state) {
-            swapColumns(firstColumn, secondColumn)
-          }
-
-          removeStyle('move-right', firstColumn)
-          removeStyle('move-left', secondColumn)
-        }
-        sorting.isSwap = false
-      })
+      await delay(ANIMATION_DURATION)
+      resolve(true)
+    }),
+    new Promise(resolve => sortingController.cancel = () => {
+      sortingController.isSorting = false
+      resolve(false)
     })
   ])
+}
+
+function animateColumnsSwap(firstColumn, secondColumn, compareFunction){
+  return new Promise(async (resolve) => {
+    const compareResult = compareFunction(+firstColumn.textContent, +secondColumn.textContent)
+
+    if (sortingController.isSorting && compareResult > 0) {
+      sortingController.isSwap = true
+
+      addStyle('move-right', firstColumn)
+      addStyle('move-left', secondColumn)
+
+      await delay(ANIMATION_DURATION)
+
+      removeStyle('move-right', firstColumn)
+      removeStyle('move-left', secondColumn)
+
+      if (sortingController.isSorting) {
+        swapColumns(firstColumn, secondColumn)
+      }
+
+      sortingController.isSwap = false
+    }
+    resolve()
+  })
 }
 
 function addStyle(style, ...elements){
@@ -154,12 +155,8 @@ function delay(timeout){
   return new Promise(resolve => setTimeout(resolve, timeout))
 }
 
-function disableButtons(...buttons){
-  buttons.forEach(button => button.disabled = true)
-}
-
-function enableButtons(...buttons){
-  buttons.forEach(button => button.disabled = false)
+function setButtonsDisable(isDisabled, ...buttons){
+  buttons.forEach(button => button.disabled = isDisabled)
 }
 
 function sortMax(a, b) {
