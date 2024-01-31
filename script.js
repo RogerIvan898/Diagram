@@ -7,7 +7,7 @@ const buttonSortToMin = document.getElementById('sort-min')
 const diagramElement = document.getElementById('diagram')
 
 let columns = []
-const sortingController = {
+const sortingData = {
   isSorting: false,
   isSwap: false,
   cancel: () => {},
@@ -27,7 +27,7 @@ function getNumbers(){
 async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
-    sortingController.cancel()
+    sortingData.cancel()
     clearDiagram()
 
     drawDiagram(numbers)
@@ -65,19 +65,18 @@ function createElement(tagName, ...classes){
 }
 
 async function sortColumns(compareFunction){
-  if(sortingController.isSwap){
+  if(sortingData.isSwap){
     await delay(ANIMATION_DURATION)
   }
-  sortingController.cancel()
-  sortingController.isSorting = true
+  sortingData.cancel()
+  sortingData.isSorting = true
 
   for(let i = 0; i < columns.length; i++) {
     for (let j = 0; j < columns.length - i - 1; j++) {
       const firstColumn = columns[j]
       const secondColumn = columns[j + 1]
-
-      addStyle('column-compare', firstColumn, secondColumn)
-      const iterationResult = await processSortIteration()
+      
+      const iterationResult = await processSortIteration(firstColumn, secondColumn)
 
       if (iterationResult){
         await animateColumnsSwap(firstColumn, secondColumn, compareFunction)
@@ -85,32 +84,36 @@ async function sortColumns(compareFunction){
 
       removeStyle('column-compare', firstColumn, secondColumn)
 
-      if (!iterationResult || !sortingController.isSorting) {
+      if (!iterationResult || !sortingData.isSorting) {
         return
       }
     }
   }
 }
 
-function processSortIteration(){
+const animateColumnsHighlite = async (firstColumn, secondColumn) => {
+  addStyle('column-compare', firstColumn, secondColumn)
+  await delay(ANIMATION_DURATION)
+  return true
+}
+
+const cancelPromise = () => new Promise(resolve => sortingData.cancel = () => {
+  sortingData.isSorting = false
+  resolve(false)
+})
+
+function processSortIteration(firstColumn, secondColumn){
   return Promise.race([
-    new Promise(async (resolve) => {
-      await delay(ANIMATION_DURATION)
-      resolve(true)
-    }),
-    new Promise(resolve => sortingController.cancel = () => {
-      sortingController.isSorting = false
-      resolve(false)
-    })
+    animateColumnsHighlite(firstColumn, secondColumn),
+    cancelPromise()
   ])
 }
 
-function animateColumnsSwap(firstColumn, secondColumn, compareFunction){
-  return new Promise(async (resolve) => {
+async function animateColumnsSwap(firstColumn, secondColumn, compareFunction){
     const compareResult = compareFunction(+firstColumn.textContent, +secondColumn.textContent)
 
-    if (sortingController.isSorting && compareResult > 0) {
-      sortingController.isSwap = true
+    if (sortingData.isSorting && compareResult > 0) {
+      sortingData.isSwap = true
 
       addStyle('move-right', firstColumn)
       addStyle('move-left', secondColumn)
@@ -120,14 +123,12 @@ function animateColumnsSwap(firstColumn, secondColumn, compareFunction){
       removeStyle('move-right', firstColumn)
       removeStyle('move-left', secondColumn)
 
-      if (sortingController.isSorting) {
+      if (sortingData.isSorting) {
         swapColumns(firstColumn, secondColumn)
       }
 
-      sortingController.isSwap = false
+      sortingData.isSwap = false
     }
-    resolve()
-  })
 }
 
 function addStyle(style, ...elements){
@@ -142,8 +143,8 @@ async function swapColumns(firstColumn, secondColumn) {
   const firstColumnIndex = columns.indexOf(firstColumn)
   const secondColumnIndex = columns.indexOf(secondColumn)
 
-  diagramElement.insertBefore(firstColumn, secondColumn)
-  diagramElement.insertBefore(secondColumn, firstColumn)
+  secondColumn.after(firstColumn)
+  firstColumn.before(secondColumn)
 
   const tmp = columns[firstColumnIndex]
   columns[firstColumnIndex] = columns[secondColumnIndex]
