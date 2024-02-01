@@ -16,6 +16,7 @@ body{
 }
 
 .diagram-column{
+    transition: all 0.8s;
     background: darkseagreen;
     width: 100px;
     border: 1px solid black;
@@ -24,10 +25,22 @@ body{
     align-items: center;
 }
 
-#sort{
+.column-compare{
+    background-color: red;
+}
+
+#sort-direction{
     gap: 24px;
     margin-top: 24px;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.move-right{
+    transform: translateX(calc(100% + 10px));
+}
+
+.move-left{
+    transform: translateX(calc(-100% - 10px));
 }
