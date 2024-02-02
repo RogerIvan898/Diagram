@@ -11,7 +11,7 @@ let currentColumn = null
 let currentIteration = null
 
 buttonSortToMin.addEventListener('click', () => processIteration('forward'))
-buttonSortToMax.addEventListener('click', () => processIteration('back'))
+buttonSortToMax.addEventListener('click', () => processIteration('backward'))
 buttonCreateDiagram.addEventListener('click', createDiagram)
 
 function getNumbers(){
@@ -77,7 +77,7 @@ async function processIteration(direction = 'forward'){
     secondColumn = columns[currentColumnIndex + 1]
   }
 
-  if(direction === 'back'){
+  if(direction === 'backward'){
     compareFunction = sortMin
     if(currentColumnIndex !== 0) {
       firstColumn = columns[currentColumnIndex - 1]
