@@ -7,14 +7,11 @@ const buttonSortToMin = document.getElementById('sort-min')
 const diagramElement = document.getElementById('diagram')
 
 let columns = []
-const sortingData = {
-  isSorting: false,
-  isSwap: false,
-  cancel: () => {},
-}
+let currentColumn = null
+let currentIteration = null
 
-buttonSortToMin.addEventListener('click', () => sortColumns(sortMin))
-buttonSortToMax.addEventListener('click', () => sortColumns(sortMax))
+buttonSortToMin.addEventListener('click', () => processIteration('forward'))
+buttonSortToMax.addEventListener('click', () => processIteration('back'))
 buttonCreateDiagram.addEventListener('click', createDiagram)
 
 function getNumbers(){
@@ -27,18 +24,15 @@ function getNumbers(){
 async function createDiagram(){
   const numbers = getNumbers()
   if(numbers.length){
-    sortingData.cancel()
     clearDiagram()
-
     drawDiagram(numbers)
-
+    currentColumn = columns[0]
     setButtonsDisable(false, buttonSortToMin, buttonSortToMax)
   }
 }
 
 function drawDiagram(numbers){
   const maxNumber = Math.max(...numbers)
-
   numbers.forEach(number => {
     const newColumnElement = createElement('div', 'diagram-column')
 
@@ -64,71 +58,69 @@ function createElement(tagName, ...classes){
   return element
 }
 
-async function sortColumns(compareFunction){
-  if(sortingData.isSwap){
-    await delay(ANIMATION_DURATION)
+async function processIteration(direction = 'forward'){
+  if(currentIteration){
+    return
   }
-  sortingData.cancel()
-  sortingData.isSorting = true
+  const currentColumnIndex = columns.indexOf(currentColumn)
 
-  for(let i = 0; i < columns.length; i++) {
-    for (let j = 0; j < columns.length - i - 1; j++) {
-      const firstColumn = columns[j]
-      const secondColumn = columns[j + 1]
-      
-      const iterationResult = await processSortIteration(firstColumn, secondColumn)
+  let firstColumn = null
+  let secondColumn = null
+  let compareFunction = sortMax
 
-      if (iterationResult){
-        await animateColumnsSwap(firstColumn, secondColumn, compareFunction)
-      }
+  if(currentColumnIndex === columns.length - 1){
+    firstColumn = columns[currentColumnIndex - 1]
+    secondColumn = columns[currentColumnIndex]
+  }
+  else {
+    firstColumn = columns[currentColumnIndex]
+    secondColumn = columns[currentColumnIndex + 1]
+  }
 
-      removeStyle('column-compare', firstColumn, secondColumn)
-
-      if (!iterationResult || !sortingData.isSorting) {
-        return
-      }
+  if(direction === 'back'){
+    compareFunction = sortMin
+    if(currentColumnIndex !== 0) {
+      firstColumn = columns[currentColumnIndex - 1]
+      secondColumn = columns[currentColumnIndex]
     }
   }
+
+  await animateIteration(firstColumn, secondColumn, compareFunction)
 }
 
-const animateColumnsHighlite = async (firstColumn, secondColumn) => {
+async function animateIteration(firstColumn, secondColumn, compareFunction){
+  currentIteration = animateColumnsHighlite
+  await currentIteration(firstColumn, secondColumn)
+  currentIteration = null
+
+  const compareResult = compareFunction(+firstColumn.textContent, +secondColumn.textContent)
+  if(compareResult > 0){
+    currentIteration = animateColumnsSwap
+    await animateColumnsSwap(firstColumn, secondColumn)
+    currentIteration = null
+
+    swapColumns(firstColumn, secondColumn)
+  }
+  else {
+    currentColumn = secondColumn
+  }
+
+  removeStyle('column-compare', firstColumn, secondColumn)
+}
+
+async function animateColumnsHighlite(firstColumn, secondColumn) {
   addStyle('column-compare', firstColumn, secondColumn)
   await delay(ANIMATION_DURATION)
-  return true
 }
 
-const cancelPromise = () => new Promise(resolve => sortingData.cancel = () => {
-  sortingData.isSorting = false
-  resolve(false)
-})
+async function animateColumnsSwap(firstColumn, secondColumn){
+  addStyle('move-right', firstColumn)
+  addStyle('move-left', secondColumn)
 
-function processSortIteration(firstColumn, secondColumn){
-  return Promise.race([
-    animateColumnsHighlite(firstColumn, secondColumn),
-    cancelPromise()
-  ])
-}
+  await delay(ANIMATION_DURATION)
 
-async function animateColumnsSwap(firstColumn, secondColumn, compareFunction){
-    const compareResult = compareFunction(+firstColumn.textContent, +secondColumn.textContent)
-
-    if (sortingData.isSorting && compareResult > 0) {
-      sortingData.isSwap = true
-
-      addStyle('move-right', firstColumn)
-      addStyle('move-left', secondColumn)
-
-      await delay(ANIMATION_DURATION)
-
-      removeStyle('move-right', firstColumn)
-      removeStyle('move-left', secondColumn)
-
-      if (sortingData.isSorting) {
-        swapColumns(firstColumn, secondColumn)
-      }
-
-      sortingData.isSwap = false
-    }
+  removeStyle('move-right', firstColumn)
+  removeStyle('move-left', secondColumn)
 }
 
 function addStyle(style, ...elements){
