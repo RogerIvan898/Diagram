@@ -10,7 +10,7 @@ const diagramControlButtons = {
 const diagram = new Diagram()
 const { buttonForwardSwap, buttonBackwardSwap, buttonCreateDiagram } = diagramControlButtons
 
-buttonForwardSwap.addEventListener('click', () => diagram.processSwap())
+buttonForwardSwap.addEventListener('click', () => diagram.forwardSwap())
 buttonBackwardSwap.addEventListener('click', () => diagram.backwardSwap())
 buttonCreateDiagram.addEventListener('click', createDiagram)
 

@@ -1,8 +1,8 @@
 {
-  "name": "untitled34",
+  "name": "diagram",
   "version": "1.0.0",
   "description": "",
-  "main": "Diagram.js",
+  "main": "App.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

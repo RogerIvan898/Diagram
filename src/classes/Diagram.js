@@ -8,23 +8,21 @@ export class Diagram {
   element
   currentColumn
 
-  constructor(columns){
+  constructor(){
     this.columns = []
     this.element = document.getElementById('diagram')
     this.currentColumnIndex = null
   }
 
-  addColumn(column){
-    this.columns.push(column)
-  }
-
   clear(){
-    if(this.columns.length){
-      this.currentColumn = null
-      this.columns.forEach(column => column.element.remove())
-      this.columns = []
-      disableAllDiagramControlButtons(true)
+    if(!this.columns.length) {
+      return
     }
+
+    this.currentColumn = null
+    this.columns.forEach(column => column.element.remove())
+    this.columns = []
+    disableAllDiagramControlButtons(true)
   }
 
   draw(numbers){
@@ -37,7 +35,7 @@ export class Diagram {
       columnElement.textContent = number
 
       this.element.appendChild(columnElement)
-      this.addColumn(new Column(columnElement, order))
+      this.columns.push(new Column(columnElement, order))
     })
 
     this.currentColumn = this.columns[0]
@@ -86,10 +84,10 @@ export class Diagram {
     removeCSSClass('column-compare', firstColumn.element, secondColumn.element)
   }
 
-  async processSwap(){
+  async forwardSwap(){
     const firstColumn = this.currentColumn
 
-    let currentColumnIndex = this.columns.indexOf(this.currentColumn)
+    const currentColumnIndex = this.columns.indexOf(this.currentColumn)
     let secondColumn = this.columns[currentColumnIndex + 1]
 
     disableAllDiagramControlButtons(true)
@@ -113,9 +111,9 @@ export class Diagram {
 
   async backwardSwap(){
     const firstColumn = this.currentColumn
-    let secondColumn = null
-
     const currentColumnIndex = this.columns.indexOf(this.currentColumn)
+
+    let secondColumn = null
 
     if(currentColumnIndex !== 0){
       secondColumn = this.columns[currentColumnIndex - 1]
