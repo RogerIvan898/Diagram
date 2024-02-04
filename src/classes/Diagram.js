@@ -22,9 +22,6 @@ export class Diagram {
     this.currentColumn = null
     this.columns.forEach(column => column.element.remove())
     this.columns = []
-
-    disableBackwardSwapButton(true)
-    disableForwardSwapButton(true)
   }
 
   draw(numbers){
