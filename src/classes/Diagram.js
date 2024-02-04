@@ -87,7 +87,6 @@ export class Diagram {
 
   async forwardSwap(){
     const currentColumnIndex = this.columns.indexOf(this.currentColumn)
-
     const firstColumn = this.currentColumn
     const secondColumn = this.columns[currentColumnIndex + 1]
 
@@ -109,7 +108,6 @@ export class Diagram {
 
   async backwardSwap(){
     const currentColumnIndex = this.columns.indexOf(this.currentColumn)
-
     const firstColumn = this.currentColumn
     const secondColumn =  this.columns[currentColumnIndex - 1]
 
