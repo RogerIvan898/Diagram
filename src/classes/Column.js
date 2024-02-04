@@ -4,10 +4,25 @@ export class Column {
   originOrder
   currentOrder
 
+
+
+
+
+
+
+
   constructor(element, diagramOrder) {
     this.element = element
     this.value = +element.textContent
     this.originOrder = +diagramOrder
     this.currentOrder = this.originOrder
+  }
+
+  addStyle(className){
+    this.element.classList.add(className)
+  }
+
+  removeStyle(className){
+    this.element.classList.remove(className)
   }
 }

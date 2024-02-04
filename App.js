@@ -1,5 +1,6 @@
 import {Diagram} from './src/classes/Diagram.js'
 import {disableButtons} from './src/helpers.js'
+import {swapDirections} from './src/constants.js'
 
 const diagramControlButtons = {
   buttonForwardSwap: document.getElementById('sort-forward'),
@@ -16,7 +17,7 @@ buttonCreateDiagram.addEventListener('click', createDiagram)
 
 function getNumbers(){
   const inputText = document.getElementById('diagram-options-input').value
-  const numbers = inputText.split(' ').filter(number => !isNaN(Number(number)) && number !== '')
+  const numbers = inputText.split(' ').filter(number => !isNaN(+number) && number !== '')
 
   return numbers.map(Number)
 }
@@ -29,17 +30,18 @@ function createDiagram(){
 
   diagram.clear()
   diagram.draw(numbers)
-  disableForwardSwapButton(false)
+  disableSwapButton(swapDirections.FORWARD, false)
 }
 
-export function disableForwardSwapButton(isDisabled){
-  buttonForwardSwap.disabled = isDisabled
-}
+export function disableSwapButton(swapDirection, isDisabled){
+  if(swapDirection === swapDirections.FORWARD){
+    buttonForwardSwap.disabled = isDisabled
+    return
+  }
 
-export function disableBackwardSwapButton(isDisabled){
   buttonBackwardSwap.disabled = isDisabled
 }
 
-export function disableAllDiagramControlButtons(isDisabled){
+export function disableDiagramControlButtons(isDisabled){
   disableButtons(isDisabled, ...Object.values(diagramControlButtons))
 }

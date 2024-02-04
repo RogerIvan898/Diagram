@@ -1,7 +1,7 @@
 import {Column} from './Column.js'
 import {createHTMLElement, removeCSSClass, addCSSClass, delay, isAscendingOrder} from '../helpers.js'
-import {MAX_COLUMN_HEIGHT, ANIMATION_DURATION} from '../constants.js'
-import {disableAllDiagramControlButtons, disableBackwardSwapButton, disableForwardSwapButton} from '../../App.js'
+import {MAX_COLUMN_HEIGHT, ANIMATION_DURATION, swapDirections} from '../constants.js'
+import {disableDiagramControlButtons, disableSwapButton} from '../../App.js'
 
 export class Diagram {
   columns
@@ -22,7 +22,9 @@ export class Diagram {
     this.currentColumn = null
     this.columns.forEach(column => column.element.remove())
     this.columns = []
-    disableAllDiagramControlButtons(true)
+
+    disableBackwardSwapButton(true)
+    disableForwardSwapButton(true)
   }
 
   draw(numbers){
@@ -63,34 +65,31 @@ export class Diagram {
   }
 
   async animateColumnSwap(firstColumn, secondColumn){
-    const firstColumnElement = firstColumn.element
-    const secondColumnElement = secondColumn.element
-
-    addCSSClass('move-right', firstColumnElement)
-    addCSSClass('move-left', secondColumnElement)
+    firstColumn.addStyle('move-right')
+    secondColumn.addStyle('move-left')
 
     await delay(ANIMATION_DURATION)
 
-    removeCSSClass('move-right', firstColumnElement)
-    removeCSSClass('move-left', secondColumnElement)
+    firstColumn.removeStyle('move-right')
+    secondColumn.removeStyle('move-left')
   }
 
   async highliteColumns(firstColumn, secondColumn, timeout = ANIMATION_DURATION){
+    disableDiagramControlButtons(true)
     addCSSClass('column-compare', firstColumn.element, secondColumn.element)
     await delay(timeout)
   }
 
   removeColumnsHighlite(firstColumn, secondColumn){
     removeCSSClass('column-compare', firstColumn.element, secondColumn.element)
+    disableDiagramControlButtons(false)
   }
 
   async forwardSwap(){
-    const firstColumn = this.currentColumn
-
     const currentColumnIndex = this.columns.indexOf(this.currentColumn)
-    let secondColumn = this.columns[currentColumnIndex + 1]
 
-    disableAllDiagramControlButtons(true)
+    const firstColumn = this.currentColumn
+    const secondColumn = this.columns[currentColumnIndex + 1]
 
     await this.highliteColumns(firstColumn, secondColumn)
 
@@ -102,23 +101,17 @@ export class Diagram {
     }
 
     this.removeColumnsHighlite(firstColumn, secondColumn)
-    disableAllDiagramControlButtons(false)
 
     if(this.columns.indexOf(this.currentColumn) === this.columns.length - 1){
-      disableForwardSwapButton(true)
+      disableSwapButton(swapDirections.FORWARD, true)
     }
   }
 
   async backwardSwap(){
-    const firstColumn = this.currentColumn
     const currentColumnIndex = this.columns.indexOf(this.currentColumn)
 
-    let secondColumn = null
-
-    if(currentColumnIndex !== 0){
-      secondColumn = this.columns[currentColumnIndex - 1]
-    }
-    disableAllDiagramControlButtons(true)
+    const firstColumn = this.currentColumn
+    const secondColumn =  this.columns[currentColumnIndex - 1]
 
     await this.highliteColumns(firstColumn, secondColumn)
 
@@ -130,10 +123,9 @@ export class Diagram {
     }
 
     this.removeColumnsHighlite(firstColumn, secondColumn)
-    disableAllDiagramControlButtons(false)
 
     if(this.columns.indexOf(this.currentColumn) === 0){
-      disableBackwardSwapButton(true)
+      disableSwapButton(swapDirections.BACKWARD, true)
     }
   }
 }
