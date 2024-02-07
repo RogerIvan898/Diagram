@@ -12,6 +12,6 @@ export class Button{
   setElement = (HTMLElement) => this.#element = HTMLElement
   getElement = () => this.#element
 
-  setClickEvent = (callback) => this.#clickEvent = callback
+  setClickEvent = (event) => this.#clickEvent = event
   getClickEvent = () => this.#clickEvent
 }

@@ -7,8 +7,11 @@ export class SwapController{
     this.#currentIterations = []
   }
 
+  getIterations = () => this.iterations
+
   addIteration(columns){
     const iteraion = []
+
     columns.forEach(column => iteraion.push(false))
 
     this.#iterations.push(iteraion)

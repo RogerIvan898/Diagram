@@ -1,5 +1,5 @@
-import {createHTMLElement, disableButtons, addCSSClass, delay, isAscendingOrder, isDescendingOrder} from '../helpers.js'
-import {MAX_COLUMN_HEIGHT, ANIMATION_DURATION, swapDirections} from '../constants.js'
+import {disableButtons} from '../helpers.js'
+import {swapDirections} from '../constants.js'
 import {Button} from './Button.js'
 import {ColumnContainer} from './ColumnContainer.js'
 
@@ -13,11 +13,9 @@ export class Diagram {
   constructor(){
     this.#columnContainer = new ColumnContainer()
 
-    this.#initButtons()
-
-    console.log(this.#columnContainer)
-    console.log(this.#forwardSwapButton)
     this.#inputElement = document.getElementById('diagram-options-input')
+
+    this.#initButtons()
   }
 
   #initButtons(){
@@ -25,16 +23,18 @@ export class Diagram {
     this.#createDiagramButton = new Button(createColumnButton, () => this.drawColumns())
 
     const forwardButton = document.getElementById('sort-forward')
-    this.#forwardSwapButton = new Button(forwardButton, () => this.swapColumnsFroward())
+    this.#forwardSwapButton = new Button(forwardButton, () => this.swapColumns(swapDirections.FORWARD))
 
     const backwardButton = document.getElementById('sort-backward')
-    this.#backwardSwapButton = new Button(backwardButton, () => this.swapColumnsBackward())
+    this.#backwardSwapButton = new Button(backwardButton, () => this.swapColumns(swapDirections.BACKWARD))
   }
 
   drawColumns(){
     this.#columnContainer.clear()
+
     this.#columnContainer.draw(this.getInputNumbers())
 
+    this.#backwardSwapButton.getElement().disabled = true
     this.#forwardSwapButton.getElement().disabled = false
   }
 
@@ -45,21 +45,30 @@ export class Diagram {
     return numbers.map(Number)
   }
 
-  async swapColumnsFroward(){
+  async swapColumns(direction){
+    let sortResult = null
+    let swapButton = null
 
     this.disableAllButtons(true)
-    await this.#columnContainer.forwardSwap()
-    this.disableAllButtons(false)
-  }
 
-  async swapColumnsBackward() {
-    this.disableAllButtons(true)
-    await this.#columnContainer.swapBackward()
+    if(direction === swapDirections.FORWARD){
+      sortResult = await this.#columnContainer.swapForward()
+      swapButton = this.#forwardSwapButton
+    }
+    else {
+      sortResult = await this.#columnContainer.swapBackward()
+      swapButton = this.#backwardSwapButton
+    }
+
     this.disableAllButtons(false)
+
+    if(sortResult){
+      this.disableButtons(true, swapButton)
+    }
   }
 
   disableButtons(isDisabled, ...buttons){
-    disableButtons(isDisabled, buttons.map(button => button.getElement()))
+    disableButtons(isDisabled, ...buttons.map(button => button.getElement()))
   }
 
   disableAllButtons(isDisabled){

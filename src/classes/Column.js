@@ -3,14 +3,10 @@ import {createHTMLElement} from '../helpers.js'
 export class Column {
   #element
   #value
-  #originOrder
-  #columnCurrentOrder
 
   constructor(value, diagramOrder) {
     this.#element = createHTMLElement('div', 'diagram-column')
     this.#value = Number(value)
-    this.#originOrder = Number(diagramOrder)
-    this.#columnCurrentOrder = diagramOrder
 
     this.#element.textContent = value
   }
@@ -23,6 +19,10 @@ export class Column {
 
   setValue = (value) => this.#value = value
   getValue = () => this.#value
+
+  remove(){
+    this.#element.remove()
+  }
 
   highlight(){
     this.#element.classList.add('column-compare')

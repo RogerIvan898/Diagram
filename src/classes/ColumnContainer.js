@@ -9,15 +9,16 @@ export class ColumnContainer{
   #currentColumn
   #currentIteration
   #swapController
+  #isSortingFinished
 
   constructor() {
+    this.#isSortingFinished = false
     this.#columns = []
     this.#currentColumn = null
     this.#element = document.getElementById('diagram')
     this.#currentIteration = 0
     this.#swapController = new SwapController()
   }
-
 
   addColumn(column){
     this.#columns.push(column)
@@ -36,15 +37,15 @@ export class ColumnContainer{
   draw(numbers){
     const maxNumber = Math.max(...numbers)
 
-    numbers.forEach((number, order) => {
-      const column = new Column(number, order)
+    numbers.forEach((number) => {
+      const column = new Column(number)
       column.setHeight(`${ (MAX_COLUMN_HEIGHT * number) / maxNumber }%`)
 
       this.addColumn(column)
     })
     this.#currentColumn = this.#columns[0]
+    this.#currentIteration = 0
     this.#swapController.addIteration(this.#columns)
-    console.log(this.#columns)
   }
 
   async highlightColumns(firstColumn, secondColumn){
@@ -85,18 +86,17 @@ export class ColumnContainer{
     this.#columns[firstColumnIndex] = this.#columns[secondColumnIndex]
     this.#columns[secondColumnIndex] = tmp
 
-    const tmpOrder = firstColumn.currentOrder
-    firstColumn.currentOrder = secondColumn.currentOrder
-    secondColumn.currentOrder = tmpOrder
-
     this.#swapController.setSwapState(firstColumnIndex, true)
     this.#swapController.setSwapState(secondColumnIndex, true)
   }
 
-  async forwardSwap(){
-    if(this.getColumnIndex(this.#currentColumn) === this.#columns.length - 1){
+  async swapForward(){
+    this.#isSortingFinished = false
+
+    if(this.getColumnIndex(this.#currentColumn)  === this.#columns.length - 1){
       this.#currentColumn = this.#columns[0]
       this.#currentIteration++
+
       this.#swapController.addIteration(this.#columns)
     }
 
@@ -114,9 +114,25 @@ export class ColumnContainer{
     }
 
     this.removeColumnsHighlight(firstColumn, secondColumn)
+
+    if(this.getColumnIndex(this.#currentColumn) === this.#columns.length - 1
+      && this.#currentIteration + 1 === this.#columns.length - 1){
+      this.#isSortingFinished = true
+    }
+
+    return this.#isSortingFinished
   }
 
   async swapBackward() {
+    this.#isSortingFinished = false
+
+    if(this.getColumnIndex(this.#currentColumn) === 0){
+      this.#currentColumn = this.#columns[this.#columns.length - 1]
+      this.#currentIteration--
+
+      this.#swapController.removeCurrentIteration()
+    }
+
     const currentColumnIndex = this.getColumnIndex(this.#currentColumn)
     const firstColumn = this.#currentColumn
     const secondColumn = this.#columns[currentColumnIndex - 1]
@@ -135,18 +151,11 @@ export class ColumnContainer{
 
     this.removeColumnsHighlight(firstColumn, secondColumn)
 
-    if (this.getColumnIndex(this.#currentColumn) === 0) {
-      if (this.#currentIteration === 0) {
-        return
-      }
-      this.#currentColumn = this.#columns[this.#columns.length - 1]
-      this.#currentIteration--
-      this.#swapController.removeCurrentIteration()
+    if(this.#currentIteration === 0 && this.getColumnIndex(this.#currentColumn) === 0){
+      this.#isSortingFinished = true
     }
-  }
 
-  getColumnByIndex(index){
-    return this.#columns[index]
+    return this.#isSortingFinished
   }
 
   getColumnIndex(columnElement){
