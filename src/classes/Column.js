@@ -2,34 +2,32 @@ import {createHTMLElement} from '../helpers.js'
 
 export class Column {
   #element
-  #value
 
-  constructor(value, diagramOrder) {
+  constructor(value, height) {
     this.#element = createHTMLElement('div', 'diagram-column')
-    this.#value = Number(value)
+    this.#element.style.height = height
 
-    this.#element.textContent = value
+    this.#element.textContent = Number(value)
   }
 
-  setHeight = (height) => this.#element.style.height = height
-  getHeight = () => this.#element.style.height
+  get element(){
+    return this.#element
+  }
 
-  setElement = (element) => this.#element = element
-  getElement = () => this.#element
-
-  setValue = (value) => this.#value = value
-  getValue = () => this.#value
+  get value(){
+    return this.#element.textContent
+  }
 
   remove(){
     this.#element.remove()
   }
 
   highlight(){
-    this.#element.classList.add('column-compare')
+    this.addStyle('column-compare')
   }
 
   removeHighlight(){
-    this.#element.classList.remove('column-compare')
+    this.removeStyle('column-compare')
   }
 
   addStyle(className){

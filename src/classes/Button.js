@@ -1,17 +1,15 @@
 export class Button{
   #element
-  #clickEvent
 
-  constructor(buttonElement, clickEvent) {
-    this.#element = buttonElement
-    this.#clickEvent = clickEvent
+  constructor(buttonText, clickEvent, isDisabled = false) {
+    this.#element = document.createElement('button')
 
-    this.#element.addEventListener('click', this.#clickEvent)
+    this.#element.textContent = buttonText
+    this.#element.addEventListener('click', clickEvent)
+    this.#element.disabled = isDisabled
   }
 
-  setElement = (HTMLElement) => this.#element = HTMLElement
-  getElement = () => this.#element
-
-  setClickEvent = (event) => this.#clickEvent = event
-  getClickEvent = () => this.#clickEvent
+  get element(){
+    return this.#element
+  }
 }

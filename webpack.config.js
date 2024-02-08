@@ -9,6 +9,9 @@ module.exports = {
     filename: '[name].[contenthash].js',
     clean: true,
   },
+  devServer: {
+    static: path.resolve(__dirname, 'build')
+  },
   plugins: [
     new HtmlWebpakPlagin({template: path.resolve(__dirname, 'main.html')})
   ],

@@ -1,28 +1,35 @@
 import {Column} from './Column.js'
-import {SwapController} from './SwapController.js'
-import {MAX_COLUMN_HEIGHT, ANIMATION_DURATION} from '../constants.js'
-import {delay, isAscendingOrder} from '../helpers.js'
+import {swapDirections, MAX_COLUMN_HEIGHT, ANIMATION_DURATION} from '../constants.js'
+import {delay, isAscendingOrder, createHTMLElement} from '../helpers.js'
 
 export class ColumnContainer{
   #columns
   #element
-  #currentColumn
-  #currentIteration
-  #swapController
-  #isSortingFinished
+  #iterations
+  #externalLoopStep
+  #iternalLoopStep
 
-  constructor() {
-    this.#isSortingFinished = false
+  constructor(numbers) {
+    this.#element = createHTMLElement('div', 'diagram')
     this.#columns = []
-    this.#currentColumn = null
-    this.#element = document.getElementById('diagram')
-    this.#currentIteration = 0
-    this.#swapController = new SwapController()
+    this.#iterations = []
+    this.#externalLoopStep = 0
+    this.#iternalLoopStep = 0
+
+    this.generateColumns(numbers)
+  }
+
+  get element(){
+    return this.#element
+  }
+
+  get columnsLength(){
+    return this.#columns.length
   }
 
   addColumn(column){
     this.#columns.push(column)
-    this.#element.appendChild(column.getElement())
+    this.#element.appendChild(column.element)
   }
 
   clear(){
@@ -32,20 +39,21 @@ export class ColumnContainer{
 
     this.#columns.forEach(column => column.remove())
     this.#columns = []
+    this.#iterations = []
+
+    this.#iternalLoopStep = 0
+    this.#externalLoopStep = 0
   }
 
-  draw(numbers){
+  generateColumns(numbers){
     const maxNumber = Math.max(...numbers)
 
     numbers.forEach((number) => {
-      const column = new Column(number)
-      column.setHeight(`${ (MAX_COLUMN_HEIGHT * number) / maxNumber }%`)
+      const columnHeight = `${ (MAX_COLUMN_HEIGHT * number) / maxNumber }%`
+      const column = new Column(number, columnHeight)
 
       this.addColumn(column)
     })
-    this.#currentColumn = this.#columns[0]
-    this.#currentIteration = 0
-    this.#swapController.addIteration(this.#columns)
   }
 
   async highlightColumns(firstColumn, secondColumn){
@@ -71,8 +79,8 @@ export class ColumnContainer{
   }
 
   async swapColumns(firstColumn, secondColumn){
-    const firstColumnElement = firstColumn.getElement()
-    const secondColumnElement = secondColumn.getElement()
+    const firstColumnElement = firstColumn.element
+    const secondColumnElement = secondColumn.element
 
     const firstColumnIndex = this.getColumnIndex(firstColumn)
     const secondColumnIndex = this.getColumnIndex(secondColumn)
@@ -85,77 +93,64 @@ export class ColumnContainer{
     const tmp = this.#columns[firstColumnIndex]
     this.#columns[firstColumnIndex] = this.#columns[secondColumnIndex]
     this.#columns[secondColumnIndex] = tmp
-
-    this.#swapController.setSwapState(firstColumnIndex, true)
-    this.#swapController.setSwapState(secondColumnIndex, true)
   }
 
-  async swapForward(){
-    this.#isSortingFinished = false
-
-    if(this.getColumnIndex(this.#currentColumn)  === this.#columns.length - 1){
-      this.#currentColumn = this.#columns[0]
-      this.#currentIteration++
-
-      this.#swapController.addIteration(this.#columns)
+  async stepForward() {
+    if(this.#iternalLoopStep === this.#columns.length - this.#externalLoopStep - 1){
+      this.#iternalLoopStep = 0
+      this.#externalLoopStep++
     }
 
-    const currentColumnIndex = this.getColumnIndex(this.#currentColumn)
-    const firstColumn = this.#currentColumn
-    const secondColumn = this.#columns[currentColumnIndex + 1]
+    const iteration = {isSwaped: false, index: this.#iternalLoopStep + 1}
+    const firstColumn = this.#columns[this.#iternalLoopStep]
+    const secondColumn = this.#columns[this.#iternalLoopStep + 1]
+    const length = this.#columns.length
 
     await this.highlightColumns(firstColumn, secondColumn)
 
-    if(isAscendingOrder(firstColumn.getValue(), secondColumn.getValue())){
+    if (isAscendingOrder(firstColumn.value, secondColumn.value)) {
       await this.swapColumns(firstColumn, secondColumn)
+      iteration.isSwaped = true
     }
-    else {
-      this.#currentColumn = secondColumn
-    }
+    this.#iterations.push(iteration)
 
     this.removeColumnsHighlight(firstColumn, secondColumn)
 
-    if(this.getColumnIndex(this.#currentColumn) === this.#columns.length - 1
-      && this.#currentIteration + 1 === this.#columns.length - 1){
-      this.#isSortingFinished = true
+    this.#iternalLoopStep++
+
+    if(this.#externalLoopStep + 1 === this.#columns.length - 1 &&
+      this.#iternalLoopStep === this.#columns.length - this.#externalLoopStep - 1){
+      return false
     }
 
-    return this.#isSortingFinished
+    return true
   }
 
-  async swapBackward() {
-    this.#isSortingFinished = false
+  async stepBackward() {
+    const iteration = this.#iterations.pop()
 
-    if(this.getColumnIndex(this.#currentColumn) === 0){
-      this.#currentColumn = this.#columns[this.#columns.length - 1]
-      this.#currentIteration--
-
-      this.#swapController.removeCurrentIteration()
+    if(this.#iternalLoopStep === 0){
+      this.#iternalLoopStep = this.#columns.length - 1
+      this.#externalLoopStep--
     }
 
-    const currentColumnIndex = this.getColumnIndex(this.#currentColumn)
-    const firstColumn = this.#currentColumn
-    const secondColumn = this.#columns[currentColumnIndex - 1]
+    const firstColumn = this.#columns[iteration.index]
+    const secondColumn = this.#columns[iteration.index - 1]
 
     await this.highlightColumns(firstColumn, secondColumn)
 
-    if (this.#swapController.getSwapState(currentColumnIndex)) {
+    if (iteration.isSwaped) {
       await this.swapColumns(secondColumn, firstColumn)
-
-      this.#swapController.setSwapState(currentColumnIndex, false)
-      this.#swapController.setSwapState(currentColumnIndex - 1, false)
-    }
-    else {
-      this.#currentColumn = secondColumn
     }
 
     this.removeColumnsHighlight(firstColumn, secondColumn)
+    this.#iternalLoopStep = iteration.index
 
-    if(this.#currentIteration === 0 && this.getColumnIndex(this.#currentColumn) === 0){
-      this.#isSortingFinished = true
+    if(!this.#iterations.length){
+      return false
     }
 
-    return this.#isSortingFinished
+    return true
   }
 
   getColumnIndex(columnElement){

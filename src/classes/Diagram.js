@@ -1,77 +1,83 @@
-import {disableButtons} from '../helpers.js'
+import {disableButtons, createHTMLElement} from '../helpers.js'
 import {swapDirections} from '../constants.js'
 import {Button} from './Button.js'
 import {ColumnContainer} from './ColumnContainer.js'
 
 export class Diagram {
+  #element
   #columnContainer
-  #forwardSwapButton
-  #backwardSwapButton
-  #createDiagramButton
-  #inputElement
+  #buttonStepForward
+  #buttonStepBackward
+  #buttonCreateDiagram
 
-  constructor(){
-    this.#columnContainer = new ColumnContainer()
+  constructor(numbers, buttonCreate){
+    this.#element = document.createElement('div')
 
-    this.#inputElement = document.getElementById('diagram-options-input')
+    this.#buttonCreateDiagram = buttonCreate
+    this.#buttonStepForward = new Button('Вперед', () => this.processSorting(swapDirections.FORWARD))
+    this.#buttonStepBackward = new Button('Назад', () => this.processSorting(swapDirections.BACKWARD), true)
+    this.#columnContainer = new ColumnContainer(numbers, this.#element)
 
-    this.#initButtons()
+    this.#build()
   }
 
-  #initButtons(){
-    const createColumnButton = document.getElementById('diagram-options-button')
-    this.#createDiagramButton = new Button(createColumnButton, () => this.drawColumns())
+  #build(){
+    const buttonsContainer = createHTMLElement('div', 'sort-direction')
 
-    const forwardButton = document.getElementById('sort-forward')
-    this.#forwardSwapButton = new Button(forwardButton, () => this.swapColumns(swapDirections.FORWARD))
+    buttonsContainer.appendChild(this.#buttonStepForward.element)
+    buttonsContainer.appendChild(this.#buttonStepBackward.element)
+    
+    this.#element.appendChild(buttonsContainer)
+    this.#element.appendChild(this.#columnContainer.element)
 
-    const backwardButton = document.getElementById('sort-backward')
-    this.#backwardSwapButton = new Button(backwardButton, () => this.swapColumns(swapDirections.BACKWARD))
+    document.querySelector('body').appendChild(this.#element)
+
+
+    if(this.#columnContainer.columnsLength <= 1){
+      this.disableButtons(true, this.#buttonStepForward)
+    }
   }
 
-  drawColumns(){
+  redrawColumnContainer(numbers){
     this.#columnContainer.clear()
+    this.#columnContainer.generateColumns(numbers)
 
-    this.#columnContainer.draw(this.getInputNumbers())
+    if(this.#columnContainer.columnsLength <= 1){
+      this.disableButtons(true, this.#buttonStepForward)
+      return
+    }
 
-    this.#backwardSwapButton.getElement().disabled = true
-    this.#forwardSwapButton.getElement().disabled = false
+    this.disableAllButtons(false)
+    this.disableButtons(true, this.#buttonStepBackward)
   }
 
-  getInputNumbers(){
-    const inputText = this.#inputElement.value
-    const numbers = inputText.split(' ').filter(number => !isNaN(Number(number)) && number !== '')
-
-    return numbers.map(Number)
-  }
-
-  async swapColumns(direction){
+  async processSorting(direction){
     let sortResult = null
     let swapButton = null
 
     this.disableAllButtons(true)
 
     if(direction === swapDirections.FORWARD){
-      sortResult = await this.#columnContainer.swapForward()
-      swapButton = this.#forwardSwapButton
+      sortResult = await this.#columnContainer.stepForward()
+      swapButton = this.#buttonStepForward
     }
     else {
-      sortResult = await this.#columnContainer.swapBackward()
-      swapButton = this.#backwardSwapButton
+      sortResult = await this.#columnContainer.stepBackward()
+      swapButton = this.#buttonStepBackward
     }
 
     this.disableAllButtons(false)
 
-    if(sortResult){
+    if(!sortResult){
       this.disableButtons(true, swapButton)
     }
   }
 
   disableButtons(isDisabled, ...buttons){
-    disableButtons(isDisabled, ...buttons.map(button => button.getElement()))
+    disableButtons(isDisabled, ...buttons.map(button => button.element))
   }
 
   disableAllButtons(isDisabled){
-    this.disableButtons(isDisabled, this.#createDiagramButton, this.#forwardSwapButton, this.#backwardSwapButton)
+    this.disableButtons(isDisabled, this.#buttonCreateDiagram, this.#buttonStepForward, this.#buttonStepBackward)
   }
 }

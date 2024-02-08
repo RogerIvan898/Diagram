@@ -5,7 +5,7 @@ body{
     flex-direction: column;
 }
 
-#diagram{
+.diagram{
     margin-top: 15vh;
     display: flex;
     width: 72vw;
@@ -29,7 +29,7 @@ body{
     background-color: red;
 }
 
-#sort-direction{
+.sort-direction{
     gap: 24px;
     margin-top: 24px;
     display: flex;
