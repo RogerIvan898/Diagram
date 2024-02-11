@@ -1,30 +1,36 @@
 import {Column} from './Column.js'
-import {swapDirections, MAX_COLUMN_HEIGHT, ANIMATION_DURATION} from '../constants.js'
-import {delay, isAscendingOrder, createHTMLElement} from '../helpers.js'
+import {MAX_COLUMN_HEIGHT, ANIMATION_DURATION} from '../constants.js'
+import {delay, isAscendingOrder, createHTMLElement, toggleCssClass} from '../helpers.js'
 
 export class ColumnContainer{
   #columns
   #element
   #iterations
   #externalLoopStep
-  #iternalLoopStep
+  #internalLoopStep
+  #isSortingDone
 
   constructor(numbers) {
     this.#element = createHTMLElement('div', 'diagram')
     this.#columns = []
     this.#iterations = []
     this.#externalLoopStep = 0
-    this.#iternalLoopStep = 0
+    this.#internalLoopStep = 0
+    this.#isSortingDone = false
 
-    this.generateColumns(numbers)
+    numbers && this.generateColumns(numbers)
   }
 
   get element(){
     return this.#element
   }
 
-  get columnsLength(){
+  get columnsCount(){
     return this.#columns.length
+  }
+
+  get isSortingDone(){
+    return this.#isSortingDone
   }
 
   addColumn(column){
@@ -41,7 +47,7 @@ export class ColumnContainer{
     this.#columns = []
     this.#iterations = []
 
-    this.#iternalLoopStep = 0
+    this.#internalLoopStep = 0
     this.#externalLoopStep = 0
   }
 
@@ -56,26 +62,20 @@ export class ColumnContainer{
     })
   }
 
-  async highlightColumns(firstColumn, secondColumn){
-    firstColumn.highlight()
-    secondColumn.highlight()
-
+  async toggleColumnsHighlight(firstColumn, secondColumn, isHighlight){
+    toggleCssClass('column-compare', [firstColumn.element, secondColumn.element],
+      isHighlight)
     await delay(ANIMATION_DURATION)
-  }
-
-  removeColumnsHighlight(firstColumn, secondColumn){
-    firstColumn.removeHighlight()
-    secondColumn.removeHighlight()
   }
 
   async animateColumnSwap(firstColumn, secondColumn){
-    firstColumn.addStyle('move-right')
-    secondColumn.addStyle('move-left')
+    toggleCssClass('move-right', firstColumn.element, true)
+    toggleCssClass('move-left', secondColumn.element, true)
 
     await delay(ANIMATION_DURATION)
 
-    firstColumn.removeStyle('move-right')
-    secondColumn.removeStyle('move-left')
+    toggleCssClass('move-right', firstColumn.element, false)
+    toggleCssClass('move-left', secondColumn.element, false)
   }
 
   async swapColumns(firstColumn, secondColumn){
@@ -88,7 +88,10 @@ export class ColumnContainer{
     await this.animateColumnSwap(firstColumn, secondColumn)
 
     secondColumnElement.after(firstColumnElement)
-    firstColumnElement.before(secondColumnElement)
+
+    const tmpOrder = getComputedStyle(firstColumnElement).order
+    firstColumnElement.style.order = getComputedStyle(secondColumnElement).order
+    secondColumnElement.style.order = tmpOrder
 
     const tmp = this.#columns[firstColumnIndex]
     this.#columns[firstColumnIndex] = this.#columns[secondColumnIndex]
@@ -96,61 +99,60 @@ export class ColumnContainer{
   }
 
   async stepForward() {
-    if(this.#iternalLoopStep === this.#columns.length - this.#externalLoopStep - 1){
-      this.#iternalLoopStep = 0
+    this.#isSortingDone = false
+
+    if(this.#internalLoopStep === this.#columns.length - this.#externalLoopStep - 1){
+      this.#internalLoopStep = 0
       this.#externalLoopStep++
     }
 
-    const iteration = {isSwaped: false, index: this.#iternalLoopStep + 1}
-    const firstColumn = this.#columns[this.#iternalLoopStep]
-    const secondColumn = this.#columns[this.#iternalLoopStep + 1]
-    const length = this.#columns.length
+    const iteration = {isSwapped: false, index: this.#internalLoopStep + 1}
+    const firstColumn = this.#columns[this.#internalLoopStep]
+    const secondColumn = this.#columns[this.#internalLoopStep + 1]
 
-    await this.highlightColumns(firstColumn, secondColumn)
+    await this.toggleColumnsHighlight(firstColumn, secondColumn, true)
 
     if (isAscendingOrder(firstColumn.value, secondColumn.value)) {
       await this.swapColumns(firstColumn, secondColumn)
-      iteration.isSwaped = true
+      iteration.isSwapped = true
     }
     this.#iterations.push(iteration)
 
-    this.removeColumnsHighlight(firstColumn, secondColumn)
+    await this.toggleColumnsHighlight(firstColumn, secondColumn, false)
 
-    this.#iternalLoopStep++
+    this.#internalLoopStep++
 
     if(this.#externalLoopStep + 1 === this.#columns.length - 1 &&
-      this.#iternalLoopStep === this.#columns.length - this.#externalLoopStep - 1){
-      return false
+      this.#internalLoopStep === this.#columns.length - this.#externalLoopStep - 1){
+      this.#isSortingDone = true
     }
-
-    return true
   }
 
   async stepBackward() {
+    this.#isSortingDone = false
+
     const iteration = this.#iterations.pop()
 
-    if(this.#iternalLoopStep === 0){
-      this.#iternalLoopStep = this.#columns.length - 1
+    if(this.#internalLoopStep === 0){
+      this.#internalLoopStep = this.#columns.length - 1
       this.#externalLoopStep--
     }
 
     const firstColumn = this.#columns[iteration.index]
     const secondColumn = this.#columns[iteration.index - 1]
 
-    await this.highlightColumns(firstColumn, secondColumn)
+    await this.toggleColumnsHighlight(firstColumn, secondColumn, true)
 
-    if (iteration.isSwaped) {
+    if (iteration.isSwapped) {
       await this.swapColumns(secondColumn, firstColumn)
     }
 
-    this.removeColumnsHighlight(firstColumn, secondColumn)
-    this.#iternalLoopStep = iteration.index
+    await this.toggleColumnsHighlight(firstColumn, secondColumn, false)
+    this.#internalLoopStep = iteration.index - 1
 
     if(!this.#iterations.length){
-      return false
+      this.#isSortingDone = true
     }
-
-    return true
   }
 
   getColumnIndex(columnElement){

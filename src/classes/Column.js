@@ -21,20 +21,4 @@ export class Column {
   remove(){
     this.#element.remove()
   }
-
-  highlight(){
-    this.addStyle('column-compare')
-  }
-
-  removeHighlight(){
-    this.removeStyle('column-compare')
-  }
-
-  addStyle(className){
-    this.#element.classList.add(className)
-  }
-
-  removeStyle(className){
-    this.#element.classList.remove(className)
-  }
 }

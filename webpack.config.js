@@ -1,5 +1,5 @@
 const path = require('path')
-const HtmlWebpakPlagin = require('html-webpack-plugin')
+const HtmlWebpaсkPlugin = require('html-webpack-plugin')
 
 module.exports = {
   mode: 'development',
@@ -13,7 +13,7 @@ module.exports = {
     static: path.resolve(__dirname, 'build')
   },
   plugins: [
-    new HtmlWebpakPlagin({template: path.resolve(__dirname, 'main.html')})
+    new HtmlWebpaсkPlugin({template: path.resolve(__dirname, 'main.html')})
   ],
   module: {
     rules: [

@@ -7,12 +7,15 @@ export function createHTMLElement(tagName, ...classes){
   return element
 }
 
-export function addCSSClass(className, ...elements){
-  elements.forEach(element => element.classList.add(className))
-}
+export function toggleCssClass(className, elements, isApply) {
+  let elementsArr = []
+  elements instanceof Array ? elementsArr = elements : elementsArr.push(elements)
 
-export function removeCSSClass(className, ...elements){
-  elements.forEach(element => element.classList.remove(className))
+  if (isApply) {
+    elementsArr.forEach(element => element.classList.add(className))
+    return
+  }
+  elementsArr.forEach(element => element.classList.remove(className))
 }
 
 export function delay(timeout){
