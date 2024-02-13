@@ -1,19 +1,15 @@
 import {Diagram} from './src/classes/Diagram.js'
-import {Button} from './src/classes/Button.js'
 import './styles.css'
 
 const inputElement = document.getElementById('diagram-options-input')
 inputElement.addEventListener('keydown',
-  (event) => event.key === 'Enter' && createDiagram()
+  ({key}) => key === 'Enter' && createDiagram()
 )
+
+const buttonCreateDiagram = document.getElementById('diagram-option-create')
+buttonCreateDiagram.addEventListener('click', createDiagram)
+
 let diagram = null
-
-const buttonCreateDiagramProps = {
-  clickEvent: () => createDiagram(),
-  element: document.getElementById('diagram-option-create'),
-}
-
-const buttonCreateDiagram = new Button(buttonCreateDiagramProps)
 
 function createDiagram(){
   const inputText = inputElement.value
@@ -24,7 +20,7 @@ function createDiagram(){
   }
 
   if(!diagram){
-    diagram = new Diagram(numbers, buttonCreateDiagram)
+    diagram = new Diagram(numbers)
     return
   }
 

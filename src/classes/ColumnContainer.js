@@ -1,6 +1,6 @@
 import {Column} from './Column.js'
-import {MAX_COLUMN_HEIGHT, ANIMATION_DURATION} from '../constants.js'
-import {delay, isAscendingOrder, createHTMLElement, toggleCssClass} from '../helpers.js'
+import {MAX_COLUMN_HEIGHT} from '../constants.js'
+import {isAscendingOrder, createHTMLElement, toggleCssClass, promisifyEvent} from '../helpers.js'
 
 export class ColumnContainer{
   #columns
@@ -62,20 +62,21 @@ export class ColumnContainer{
     })
   }
 
-  async toggleColumnsHighlight(firstColumn, secondColumn, isHighlight){
-    toggleCssClass('column-compare', [firstColumn.element, secondColumn.element],
-      isHighlight)
-    await delay(ANIMATION_DURATION)
+  async toggleColumnsHighlight(firstColumn, secondColumn, force){
+    toggleCssClass('column-compare',
+      [firstColumn.element, secondColumn.element], force)
+
+    await promisifyEvent(secondColumn.element, 'transitionend')
   }
 
   async animateColumnSwap(firstColumn, secondColumn){
-    toggleCssClass('move-right', firstColumn.element, true)
-    toggleCssClass('move-left', secondColumn.element, true)
+    const firstColumnElement = firstColumn.element
+    const secondColumnElement = secondColumn.element
 
-    await delay(ANIMATION_DURATION)
+    toggleCssClass('move-right', firstColumnElement)
+    toggleCssClass('move-left', secondColumnElement)
 
-    toggleCssClass('move-right', firstColumn.element, false)
-    toggleCssClass('move-left', secondColumn.element, false)
+    await promisifyEvent(firstColumnElement, 'animationend')
   }
 
   async swapColumns(firstColumn, secondColumn){
@@ -86,12 +87,12 @@ export class ColumnContainer{
     const secondColumnIndex = this.getColumnIndex(secondColumn)
 
     await this.animateColumnSwap(firstColumn, secondColumn)
+    await this.toggleColumnsHighlight(firstColumn, secondColumn, false)
+
+    toggleCssClass('move-right', firstColumnElement)
+    toggleCssClass('move-left', secondColumnElement)
 
     secondColumnElement.after(firstColumnElement)
-
-    const tmpOrder = getComputedStyle(firstColumnElement).order
-    firstColumnElement.style.order = getComputedStyle(secondColumnElement).order
-    secondColumnElement.style.order = tmpOrder
 
     const tmp = this.#columns[firstColumnIndex]
     this.#columns[firstColumnIndex] = this.#columns[secondColumnIndex]
@@ -101,29 +102,31 @@ export class ColumnContainer{
   async stepForward() {
     this.#isSortingDone = false
 
-    if(this.#internalLoopStep === this.#columns.length - this.#externalLoopStep - 1){
+    if(this.#internalLoopStep === this.columnsCount - this.#externalLoopStep - 1){
       this.#internalLoopStep = 0
       this.#externalLoopStep++
     }
 
     const iteration = {isSwapped: false, index: this.#internalLoopStep + 1}
+    
     const firstColumn = this.#columns[this.#internalLoopStep]
     const secondColumn = this.#columns[this.#internalLoopStep + 1]
 
-    await this.toggleColumnsHighlight(firstColumn, secondColumn, true)
+    await this.toggleColumnsHighlight(firstColumn, secondColumn)
 
     if (isAscendingOrder(firstColumn.value, secondColumn.value)) {
       await this.swapColumns(firstColumn, secondColumn)
       iteration.isSwapped = true
     }
+    else {
+      await this.toggleColumnsHighlight(firstColumn, secondColumn)
+    }
+
     this.#iterations.push(iteration)
-
-    await this.toggleColumnsHighlight(firstColumn, secondColumn, false)
-
     this.#internalLoopStep++
 
-    if(this.#externalLoopStep + 1 === this.#columns.length - 1 &&
-      this.#internalLoopStep === this.#columns.length - this.#externalLoopStep - 1){
+    if(this.#externalLoopStep + 1 === this.columnsCount - 1 &&
+      this.#internalLoopStep === this.columnsCount - this.#externalLoopStep - 1){
       this.#isSortingDone = true
     }
   }
@@ -134,7 +137,7 @@ export class ColumnContainer{
     const iteration = this.#iterations.pop()
 
     if(this.#internalLoopStep === 0){
-      this.#internalLoopStep = this.#columns.length - 1
+      this.#internalLoopStep = this.columnsCount - 1
       this.#externalLoopStep--
     }
 
@@ -148,6 +151,7 @@ export class ColumnContainer{
     }
 
     await this.toggleColumnsHighlight(firstColumn, secondColumn, false)
+
     this.#internalLoopStep = iteration.index - 1
 
     if(!this.#iterations.length){

@@ -1,10 +1,12 @@
+import {createHTMLElement} from "../helpers.js"
+
 export class Button{
   #element
 
   constructor(props) {
-    const {text, clickEvent, isDisabled, element} = props
+    const {text, clickEvent, isDisabled, element, styles} = props
 
-    this.#element = element || document.createElement('button')
+    this.#element = element || createHTMLElement('button', styles)
     this.#element.disabled = isDisabled || false
     clickEvent && this.#element.addEventListener('click', clickEvent)
 

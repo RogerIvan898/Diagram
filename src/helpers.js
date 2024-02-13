@@ -1,25 +1,34 @@
 export function createHTMLElement(tagName, ...classes){
   const element = document.createElement(tagName)
-  if(classes.length){
+  if(classes && classes.length){
     element.classList.add(...classes)
   }
 
   return element
 }
 
-export function toggleCssClass(className, elements, isApply) {
-  let elementsArr = []
-  elements instanceof Array ? elementsArr = elements : elementsArr.push(elements)
+export function toggleCssClass(className, elements, force) {
+  let elementsArr = Array.isArray(elements) ? elements : [elements]
 
-  if (isApply) {
-    elementsArr.forEach(element => element.classList.add(className))
+  if(typeof force === 'boolean'){
+    elementsArr.forEach(element => element.classList.toggle(className, force))
     return
   }
-  elementsArr.forEach(element => element.classList.remove(className))
+
+  elementsArr.forEach(element => element.classList.toggle(className))
 }
 
 export function delay(timeout){
   return new Promise(resolve => setTimeout(resolve, timeout))
+}
+
+export function promisifyEvent(element, eventType){
+  return new Promise(resolve => {
+    element.addEventListener(eventType, function () {
+      element.removeEventListener(eventType, this)
+      resolve()
+    })
+  })
 }
 
 export function disableButtons(isDisabled, ...buttons){

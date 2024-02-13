@@ -8,38 +8,38 @@ export class Diagram {
   #columnContainer
   #buttonStepForward
   #buttonStepBackward
-  #buttonCreateDiagram
 
-  constructor(numbers, buttonCreate){
+  constructor(numbers){
     this.#element = document.createElement('div')
-    this.#buttonCreateDiagram = buttonCreate
     this.#columnContainer = new ColumnContainer()
+
     this.#build()
 
     this.drawColumnContainer(numbers)
   }
 
   #initControlButtons(){
+    const buttonsContainer = createHTMLElement('div', 'diagram-button-container')
+
     this.#buttonStepForward = new Button({
       text: 'Вперед',
       clickEvent: () => this.processSorting(swapDirections.FORWARD),
     })
+
     this.#buttonStepBackward = new Button({
       text: 'Назад',
       clickEvent: () => this.processSorting(swapDirections.BACKWARD),
       isDisabled: true,
     })
-  }
-
-  #build(){
-    const buttonsContainer = createHTMLElement('div', 'diagram-button-container')
-
-    this.#initControlButtons()
 
     buttonsContainer.appendChild(this.#buttonStepForward.element)
     buttonsContainer.appendChild(this.#buttonStepBackward.element)
-    
+
     this.#element.appendChild(buttonsContainer)
+  }
+
+  #build(){
+    this.#initControlButtons()
     this.#element.appendChild(this.#columnContainer.element)
 
     document.body.appendChild(this.#element)
@@ -88,7 +88,6 @@ export class Diagram {
   }
 
   disableAllButtons(isDisabled){
-    this.disableControlButtons(isDisabled,
-      this.#buttonCreateDiagram, this.#buttonStepForward, this.#buttonStepBackward)
+    this.disableControlButtons(isDisabled, this.#buttonStepForward, this.#buttonStepBackward)
   }
 }
