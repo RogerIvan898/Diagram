@@ -4,9 +4,9 @@ export class Button{
   #element
 
   constructor(props) {
-    const {text, clickEvent, isDisabled, element, styles} = props
+    const {text, clickEvent, isDisabled, styles} = props
 
-    this.#element = element || createHTMLElement('button', styles)
+    this.#element = createHTMLElement('button', styles)
     this.#element.disabled = isDisabled || false
     clickEvent && this.#element.addEventListener('click', clickEvent)
 

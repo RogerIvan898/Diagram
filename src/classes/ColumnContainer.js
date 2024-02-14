@@ -108,7 +108,7 @@ export class ColumnContainer{
     }
 
     const iteration = {isSwapped: false, index: this.#internalLoopStep + 1}
-    
+
     const firstColumn = this.#columns[this.#internalLoopStep]
     const secondColumn = this.#columns[this.#internalLoopStep + 1]
 
