@@ -1,22 +1,17 @@
 import {Column} from './Column.js'
-import {MAX_COLUMN_HEIGHT} from '../constants.js'
+import {MAX_COLUMN_HEIGHT, swapDirections} from '../constants.js'
 import {isAscendingOrder, createHTMLElement, toggleCssClass, promisifyEvent} from '../helpers.js'
 
 export class ColumnContainer{
-  #columns
-  #element
-  #iterations
-  #externalLoopStep
-  #internalLoopStep
-  #isSortingDone
+  #columns = []
+  #element = null
+  #iterations = []
+  #externalLoopStep = 0
+  #internalLoopStep = 0
+  #isSortingDone = false
 
   constructor(numbers) {
     this.#element = createHTMLElement('div', 'diagram')
-    this.#columns = []
-    this.#iterations = []
-    this.#externalLoopStep = 0
-    this.#internalLoopStep = 0
-    this.#isSortingDone = false
 
     numbers && this.generateColumns(numbers)
   }
@@ -64,30 +59,24 @@ export class ColumnContainer{
 
   async toggleColumnsHighlight(firstColumn, secondColumn, force){
     toggleCssClass('column-compare',
-      [firstColumn.element, secondColumn.element], force)
+      [firstColumn, secondColumn], force)
 
-    await promisifyEvent(secondColumn.element, 'transitionend')
+    await promisifyEvent(secondColumn, 'transitionend')
   }
 
   async animateColumnSwap(firstColumn, secondColumn){
-    const firstColumnElement = firstColumn.element
-    const secondColumnElement = secondColumn.element
+    toggleCssClass('move-right', firstColumn)
+    toggleCssClass('move-left', secondColumn)
 
-    toggleCssClass('move-right', firstColumnElement)
-    toggleCssClass('move-left', secondColumnElement)
-
-    await promisifyEvent(firstColumnElement, 'animationend')
+    await promisifyEvent(firstColumn, 'animationend')
   }
 
-  async swapColumns(firstColumn, secondColumn){
-    const firstColumnElement = firstColumn.element
-    const secondColumnElement = secondColumn.element
+  async swapColumns(firstColumnElement, secondColumnElement){
+    const firstColumnIndex = this.getColumnIndexByElement(firstColumnElement)
+    const secondColumnIndex = this.getColumnIndexByElement(secondColumnElement)
 
-    const firstColumnIndex = this.getColumnIndex(firstColumn)
-    const secondColumnIndex = this.getColumnIndex(secondColumn)
-
-    await this.animateColumnSwap(firstColumn, secondColumn)
-    await this.toggleColumnsHighlight(firstColumn, secondColumn, false)
+    await this.animateColumnSwap(firstColumnElement, secondColumnElement)
+    await this.toggleColumnsHighlight(firstColumnElement, secondColumnElement)
 
     toggleCssClass('move-right', firstColumnElement)
     toggleCssClass('move-left', secondColumnElement)
@@ -99,67 +88,77 @@ export class ColumnContainer{
     this.#columns[secondColumnIndex] = tmp
   }
 
-  async stepForward() {
-    this.#isSortingDone = false
-
-    if(this.#internalLoopStep === this.columnsCount - this.#externalLoopStep - 1){
+  handleDoneLoopIteration(stepDirection){
+    if(stepDirection === swapDirections.FORWARD &&
+      this.#internalLoopStep === this.columnsCount - this.#externalLoopStep - 1
+    ) {
       this.#internalLoopStep = 0
       this.#externalLoopStep++
     }
-
-    const iteration = {isSwapped: false, index: this.#internalLoopStep + 1}
-
-    const firstColumn = this.#columns[this.#internalLoopStep]
-    const secondColumn = this.#columns[this.#internalLoopStep + 1]
-
-    await this.toggleColumnsHighlight(firstColumn, secondColumn)
-
-    if (isAscendingOrder(firstColumn.value, secondColumn.value)) {
-      await this.swapColumns(firstColumn, secondColumn)
-      iteration.isSwapped = true
-    }
-    else {
-      await this.toggleColumnsHighlight(firstColumn, secondColumn)
-    }
-
-    this.#iterations.push(iteration)
-    this.#internalLoopStep++
-
-    if(this.#externalLoopStep + 1 === this.columnsCount - 1 &&
-      this.#internalLoopStep === this.columnsCount - this.#externalLoopStep - 1){
-      this.#isSortingDone = true
-    }
-  }
-
-  async stepBackward() {
-    this.#isSortingDone = false
-
-    const iteration = this.#iterations.pop()
-
-    if(this.#internalLoopStep === 0){
+    if(stepDirection === swapDirections.BACKWARD && this.#internalLoopStep === 0){
       this.#internalLoopStep = this.columnsCount - 1
       this.#externalLoopStep--
     }
+  }
 
-    const firstColumn = this.#columns[iteration.index]
-    const secondColumn = this.#columns[iteration.index - 1]
+  async step(direction){
+    this.#isSortingDone = false
 
-    await this.toggleColumnsHighlight(firstColumn, secondColumn, true)
+    const { FORWARD, BACKWARD } = swapDirections
 
-    if (iteration.isSwapped) {
-      await this.swapColumns(secondColumn, firstColumn)
+    let iteration = null
+    let firstColumn = null
+    let secondColumn = null
+
+    this.handleDoneLoopIteration(direction)
+
+    if(direction === FORWARD) {
+      iteration = {isSwapped: false, index: this.#internalLoopStep + 1}
+
+      firstColumn = this.#columns[this.#internalLoopStep]
+      secondColumn = this.#columns[this.#internalLoopStep + 1]
+    }
+    if(direction === BACKWARD){
+      iteration = this.#iterations.pop()
+
+      firstColumn = this.#columns[iteration.index]
+      secondColumn = this.#columns[iteration.index - 1]
     }
 
-    await this.toggleColumnsHighlight(firstColumn, secondColumn, false)
+    if(!firstColumn || !secondColumn || !iteration){
+      return
+    }
 
-    this.#internalLoopStep = iteration.index - 1
+    await this.toggleColumnsHighlight(firstColumn.element, secondColumn.element)
 
-    if(!this.#iterations.length){
+    if(direction === FORWARD){
+      if(isAscendingOrder(firstColumn.value, secondColumn.value)) {
+        await this.swapColumns(firstColumn.element, secondColumn.element)
+        iteration.isSwapped = true
+      }
+      this.#iterations.push(iteration)
+      this.#internalLoopStep++
+    }
+    if(direction === BACKWARD){
+      iteration.isSwapped && await this.swapColumns(secondColumn.element, firstColumn.element)
+      this.#internalLoopStep = iteration.index - 1
+    }
+
+    if(firstColumn.element.classList.contains('column-compare') &&
+      secondColumn.element.classList.contains('column-compare')
+    ) {
+      await this.toggleColumnsHighlight(firstColumn.element, secondColumn.element, false)
+    }
+
+    if(!this.#iterations.length ||
+      this.#externalLoopStep + 1 === this.columnsCount - 1 &&
+      this.#internalLoopStep === this.columnsCount - this.#externalLoopStep - 1
+    ) {
       this.#isSortingDone = true
     }
   }
 
-  getColumnIndex(columnElement){
-    return this.#columns.indexOf(columnElement)
+  getColumnIndexByElement(columnElement){
+    return this.#columns.indexOf(this.#columns.find(column => column.element.isEqualNode(columnElement)))
   }
 }

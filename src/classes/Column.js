@@ -1,7 +1,7 @@
 import {createHTMLElement} from '../helpers.js'
 
 export class Column {
-  #element
+  #element = null
 
   constructor(value, height) {
     this.#element = createHTMLElement('div', 'diagram-column')

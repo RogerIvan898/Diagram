@@ -1,7 +1,7 @@
 import {createHTMLElement} from "../helpers.js"
 
 export class Button{
-  #element
+  #element = null
 
   constructor(props) {
     const {text, clickEvent, isDisabled, styles} = props

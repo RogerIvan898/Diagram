@@ -4,10 +4,10 @@ import {Button} from './Button.js'
 import {ColumnContainer} from './ColumnContainer.js'
 
 export class Diagram {
-  #element
-  #columnContainer
-  #buttonStepForward
-  #buttonStepBackward
+  #element = null
+  #columnContainer = null
+  #buttonStepForward = null
+  #buttonStepBackward = null
 
   constructor(numbers){
     this.#element = document.createElement('div')
@@ -67,12 +67,12 @@ export class Diagram {
 
     this.disableAllButtons(true)
 
+    await this.#columnContainer.step(direction)
+
     if(direction === swapDirections.FORWARD){
-      await this.#columnContainer.stepForward()
       buttonStep = this.#buttonStepForward
     }
     else {
-      await this.#columnContainer.stepBackward()
       buttonStep = this.#buttonStepBackward
     }
 
