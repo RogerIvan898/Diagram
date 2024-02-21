@@ -58,17 +58,22 @@ export class ColumnContainer{
   }
 
   async toggleColumnsHighlight(firstColumn, secondColumn, force){
-    toggleCssClass('column-compare',
-      [firstColumn, secondColumn], force)
+    toggleCssClass('column-compare', [firstColumn, secondColumn], force)
 
-    await promisifyEvent(secondColumn, 'transitionend')
+    await Promise.race([
+      promisifyEvent(firstColumn, 'transitionend'),
+      promisifyEvent(secondColumn, 'transitionend')
+    ])
   }
 
   async animateColumnSwap(firstColumn, secondColumn){
     toggleCssClass('move-right', firstColumn)
     toggleCssClass('move-left', secondColumn)
 
-    await promisifyEvent(firstColumn, 'animationend')
+    await Promise.race([
+      promisifyEvent(firstColumn, 'animationend'),
+      promisifyEvent(secondColumn, 'animationend')
+    ])
   }
 
   async swapColumns(firstColumnElement, secondColumnElement){
@@ -96,59 +101,72 @@ export class ColumnContainer{
       this.#externalLoopStep++
     }
     if(stepDirection === swapDirections.BACKWARD && this.#internalLoopStep === 0){
-      this.#internalLoopStep = this.columnsCount - 1
       this.#externalLoopStep--
+      this.#internalLoopStep = this.columnsCount - this.#externalLoopStep - 1
     }
+  }
+
+  getCurrentStepData(stepDirection){
+    let firstIndx = null
+    let secondIndx = null
+    let iteration = null
+
+    if(stepDirection === swapDirections.FORWARD){
+      firstIndx = this.#internalLoopStep
+      secondIndx = firstIndx + 1
+
+      iteration = false
+    }
+    if(stepDirection === swapDirections.BACKWARD){
+      iteration = this.#iterations.pop()
+
+      firstIndx = this.#internalLoopStep
+      secondIndx = firstIndx - 1
+    }
+
+    return [firstIndx, secondIndx, iteration]
   }
 
   async step(direction){
     this.#isSortingDone = false
+    
+    this.handleDoneLoopIteration(direction)
+
+    const [firstIndx, secondIndx, isSwapped] = this.getCurrentStepData(direction)
 
     const { FORWARD, BACKWARD } = swapDirections
 
-    let iteration = null
-    let firstColumn = null
-    let secondColumn = null
+    const firstColumn = this.#columns[firstIndx]
+    const secondColumn = this.#columns[secondIndx]
 
-    this.handleDoneLoopIteration(direction)
+    let newSwapState = isSwapped
 
-    if(direction === FORWARD) {
-      iteration = {isSwapped: false, index: this.#internalLoopStep + 1}
-
-      firstColumn = this.#columns[this.#internalLoopStep]
-      secondColumn = this.#columns[this.#internalLoopStep + 1]
-    }
-    if(direction === BACKWARD){
-      iteration = this.#iterations.pop()
-
-      firstColumn = this.#columns[iteration.index]
-      secondColumn = this.#columns[iteration.index - 1]
-    }
-
-    if(!firstColumn || !secondColumn || !iteration){
+    if(!firstColumn || !secondColumn){
       return
     }
+
+    const swapColumnsArg = [firstColumn, secondColumn]
 
     await this.toggleColumnsHighlight(firstColumn.element, secondColumn.element)
 
     if(direction === FORWARD){
-      if(isAscendingOrder(firstColumn.value, secondColumn.value)) {
-        await this.swapColumns(firstColumn.element, secondColumn.element)
-        iteration.isSwapped = true
+      if(isAscendingOrder(firstColumn.value, secondColumn.value)){
+        newSwapState = true
       }
-      this.#iterations.push(iteration)
-      this.#internalLoopStep++
+      this.#iterations.push(newSwapState)
     }
-    if(direction === BACKWARD){
-      iteration.isSwapped && await this.swapColumns(secondColumn.element, firstColumn.element)
-      this.#internalLoopStep = iteration.index - 1
+    if(direction === BACKWARD && isSwapped){
+        swapColumnsArg.reverse()
+        newSwapState = false
     }
 
-    if(firstColumn.element.classList.contains('column-compare') &&
-      secondColumn.element.classList.contains('column-compare')
-    ) {
-      await this.toggleColumnsHighlight(firstColumn.element, secondColumn.element, false)
+    this.#internalLoopStep += direction
+
+    if(newSwapState !== isSwapped){
+      await this.swapColumns(swapColumnsArg[0].element, swapColumnsArg[1].element)
     }
+
+    await this.toggleColumnsHighlight(secondColumn.element, firstColumn.element, false)
 
     if(!this.#iterations.length ||
       this.#externalLoopStep + 1 === this.columnsCount - 1 &&

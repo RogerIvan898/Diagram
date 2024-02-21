@@ -1,5 +1,6 @@
 export function createHTMLElement(tagName, ...classes){
   const element = document.createElement(tagName)
+
   if(classes && classes.length){
     element.classList.add(...classes)
   }
@@ -8,14 +9,9 @@ export function createHTMLElement(tagName, ...classes){
 }
 
 export function toggleCssClass(className, elements, force) {
-  let elementsArr = Array.isArray(elements) ? elements : [elements]
+  const elementsArr = Array.isArray(elements) ? elements : [elements]
 
-  if(typeof force === 'boolean'){
-    elementsArr.forEach(element => element.classList.toggle(className, force))
-    return
-  }
-
-  elementsArr.forEach(element => element.classList.toggle(className))
+  elementsArr.forEach(element => element.classList.toggle(className, force))
 }
 
 export function delay(timeout){
@@ -24,10 +20,12 @@ export function delay(timeout){
 
 export function promisifyEvent(element, eventType){
   return new Promise(resolve => {
-    element.addEventListener(eventType, function () {
-      element.removeEventListener(eventType, this)
+    function eventListener() {
+      element.removeEventListener(eventType, eventListener)
       resolve()
-    })
+    }
+
+    element.addEventListener(eventType, eventListener)
   })
 }
 
