@@ -107,19 +107,13 @@ export class ColumnContainer{
   }
 
   getCurrentStepData(stepDirection){
-    let firstIndx = null, secondIndx = null, isSwapped = null
+    let isSwapped = false
 
-    if(stepDirection === swapDirections.FORWARD){
-      firstIndx = this.#internalLoopStep
-      secondIndx = firstIndx + 1
-
-      isSwapped = false
-    }
-    else if(stepDirection === swapDirections.BACKWARD){
+    const firstIndx = this.#internalLoopStep
+    const secondIndx = firstIndx + stepDirection
+    
+     if(stepDirection === swapDirections.BACKWARD){
       isSwapped = this.#iterations.pop()
-
-      firstIndx = this.#internalLoopStep
-      secondIndx = firstIndx - 1
     }
 
     return [this.#columns[firstIndx], this.#columns[secondIndx], isSwapped]
