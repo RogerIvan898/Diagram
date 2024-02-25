@@ -58,6 +58,12 @@ export class ColumnContainer{
   }
 
   async toggleColumnsHighlight(firstColumn, secondColumn, force){
+    if(force === false &&
+      ![firstColumn, secondColumn].some(column => column.classList.contains('column-compare'))
+    ) {
+      return
+    }
+
     toggleCssClass('column-compare', [firstColumn, secondColumn], force)
 
     await Promise.all([
@@ -150,16 +156,14 @@ export class ColumnContainer{
     const shouldSwap = direction === FORWARD ?
       isAscendingOrder(firstColumn.value, secondColumn.value) : direction === BACKWARD && isSwapped
 
-    await this.toggleColumnsHighlight(firstColumn.element, secondColumn.element)
+    await this.toggleColumnsHighlight(firstColumn.element, secondColumn.element, true)
 
     if(shouldSwap){
       await this.handleSwap(direction, firstColumn, secondColumn)
       isSwapped = true
     }
 
-    if([firstColumn, secondColumn].some(column => column.element.classList.contains('column-compare'))){
-      await this.toggleColumnsHighlight(secondColumn.element, firstColumn.element)
-    }
+    await this.toggleColumnsHighlight(secondColumn.element, firstColumn.element, false)
 
     if(direction === FORWARD){
       this.#iterations.push(isSwapped)
