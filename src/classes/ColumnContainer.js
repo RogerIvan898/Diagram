@@ -163,7 +163,7 @@ export class ColumnContainer{
       isSwapped = true
     }
 
-    await this.toggleColumnsHighlight(secondColumn.element, firstColumn.element, false)
+    await this.toggleColumnsHighlight(firstColumn.element, secondColumn.element, false)
 
     if(direction === FORWARD){
       this.#iterations.push(isSwapped)
