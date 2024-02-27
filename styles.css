@@ -5,7 +5,7 @@ body{
     flex-direction: column;
 }
 
-#diagram{
+.diagram{
     margin-top: 15vh;
     display: flex;
     width: 72vw;
@@ -16,7 +16,7 @@ body{
 }
 
 .diagram-column{
-    transition: all 0.8s;
+    transition: background-color 0.8s;
     background: darkseagreen;
     width: 100px;
     border: 1px solid black;
@@ -29,7 +29,7 @@ body{
     background-color: red;
 }
 
-#sort-direction{
+.diagram-button-container{
     gap: 24px;
     margin-top: 24px;
     display: flex;
@@ -38,9 +38,19 @@ body{
 }
 
 .move-right{
-    transform: translateX(calc(100% + 10px));
+    animation: move-right 0.8s forwards;
 }
 
 .move-left{
-    transform: translateX(calc(-100% - 10px));
+    animation: move-left 0.8s forwards;
+}
+
+@keyframes move-right {
+    0% {transform: translateX(0);}
+    100% {transform: translateX(calc(100% + 10px));}
+}
+
+@keyframes move-left{
+    0% {transform: translateX(0);}
+    100% {transform: translateX(calc(-100% - 10px));}
 }

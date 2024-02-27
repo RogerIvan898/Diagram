@@ -3,19 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Диаграмма</title>
-    <script src="./script.js" defer></script>
-    <link rel="stylesheet" href="./style.css">
+    <script type="module" src="./App.js" defer></script>
 </head>
 
 <body>
         <div class="diagram-options">
-            <input type="text" id="diagram-options-input">
-            <button id="diagram-options-button">Построить</button>
+            <input placeholder="числа через пробел" type="text" id="diagram-options-input">
+            <button id="diagram-option-create">Построить</button>
         </div>
-        <div id="sort-direction">
-            <button id="sort-min" disabled>Сортировать по убыванию</button>
-            <button id="sort-max" disabled>Сортировать по возрастанию</button>
-        </div>
-        <div id="diagram"></div>
 </body>
 </html>
